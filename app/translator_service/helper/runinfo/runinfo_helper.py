@@ -86,12 +86,9 @@ def read_runinfo_xml(project_id: str, data_id: str) -> Dict:
 
     return run_info_xml_reader(
         StringIO(
-            read_icav2_file_contents_to_string(
-                project_id=project_id,
-                data_id=data_id
-            )
+            read_icav2_file_contents_to_string(project_id=project_id, data_id=data_id)
         ),
-        keep_flowcell_layout=True
+        keep_flowcell_layout=True,
     )
 
 
@@ -99,7 +96,7 @@ def get_run_id_from_run_info(project_id: str, data_id: str) -> str:
     """
     Get instrument run id from run info xml dict
     """
-    return read_runinfo_xml(project_id, data_id)['RunInfo']['Run']['@Id']
+    return read_runinfo_xml(project_id, data_id)["RunInfo"]["Run"]["@Id"]
 
 
 def get_num_lanes_from_run_info(project_id: str, data_id: str) -> int:
@@ -109,4 +106,8 @@ def get_num_lanes_from_run_info(project_id: str, data_id: str) -> int:
     :param data_id:
     :return:
     """
-    return int(read_runinfo_xml(project_id, data_id)['RunInfo']['Run']['FlowcellLayout']['@LaneCount'])
+    return int(
+        read_runinfo_xml(project_id, data_id)["RunInfo"]["Run"]["FlowcellLayout"][
+            "@LaneCount"
+        ]
+    )

@@ -6,32 +6,42 @@ import six
 from enum import Enum
 from helper.workflowrunstatechange.Payload import Payload  # noqa: F401,E501
 
+
 class WorkflowRunStateChange(object):
 
-
     _types = {
-        'portalRunId': 'str',
-        'executionId': 'str',
-        'timestamp': 'datetime',
-        'status': 'str',
-        'workflowName': 'str',
-        'workflowVersion': 'str',
-        'workflowRunName': 'str',
-        'payload': 'Payload'
+        "portalRunId": "str",
+        "executionId": "str",
+        "timestamp": "datetime",
+        "status": "str",
+        "workflowName": "str",
+        "workflowVersion": "str",
+        "workflowRunName": "str",
+        "payload": "Payload",
     }
 
     _attribute_map = {
-        'portalRunId': 'portalRunId',
-        'executionId': 'executionId',
-        'timestamp': 'timestamp',
-        'status': 'status',
-        'workflowName': 'workflowName',
-        'workflowVersion': 'workflowVersion',
-        'workflowRunName': 'workflowRunName',
-        'payload': 'payload'
+        "portalRunId": "portalRunId",
+        "executionId": "executionId",
+        "timestamp": "timestamp",
+        "status": "status",
+        "workflowName": "workflowName",
+        "workflowVersion": "workflowVersion",
+        "workflowRunName": "workflowRunName",
+        "payload": "payload",
     }
 
-    def __init__(self, portalRunId=None, executionId=None, timestamp=None, status=None, workflowName=None, workflowVersion=None, workflowRunName=None, payload=None):  # noqa: E501
+    def __init__(
+        self,
+        portalRunId=None,
+        executionId=None,
+        timestamp=None,
+        status=None,
+        workflowName=None,
+        workflowVersion=None,
+        workflowRunName=None,
+        payload=None,
+    ):  # noqa: E501
         self._portalRunId = None
         self._executionId = None
         self._timestamp = None
@@ -50,7 +60,6 @@ class WorkflowRunStateChange(object):
         self.workflowRunName = workflowRunName
         self.payload = payload
 
-
     @property
     def portalRunId(self):
 
@@ -59,9 +68,7 @@ class WorkflowRunStateChange(object):
     @portalRunId.setter
     def portalRunId(self, portalRunId):
 
-
         self._portalRunId = portalRunId
-
 
     @property
     def executionId(self):
@@ -71,9 +78,7 @@ class WorkflowRunStateChange(object):
     @executionId.setter
     def executionId(self, executionId):
 
-
         self._executionId = executionId
-
 
     @property
     def timestamp(self):
@@ -83,9 +88,7 @@ class WorkflowRunStateChange(object):
     @timestamp.setter
     def timestamp(self, timestamp):
 
-
         self._timestamp = timestamp
-
 
     @property
     def status(self):
@@ -95,9 +98,7 @@ class WorkflowRunStateChange(object):
     @status.setter
     def status(self, status):
 
-
         self._status = status
-
 
     @property
     def workflowName(self):
@@ -107,9 +108,7 @@ class WorkflowRunStateChange(object):
     @workflowName.setter
     def workflowName(self, workflowName):
 
-
         self._workflowName = workflowName
-
 
     @property
     def workflowVersion(self):
@@ -119,9 +118,7 @@ class WorkflowRunStateChange(object):
     @workflowVersion.setter
     def workflowVersion(self, workflowVersion):
 
-
         self._workflowVersion = workflowVersion
-
 
     @property
     def workflowRunName(self):
@@ -131,9 +128,7 @@ class WorkflowRunStateChange(object):
     @workflowRunName.setter
     def workflowRunName(self, workflowRunName):
 
-
         self._workflowRunName = workflowRunName
-
 
     @property
     def payload(self):
@@ -143,7 +138,6 @@ class WorkflowRunStateChange(object):
     @payload.setter
     def payload(self, payload):
 
-
         self._payload = payload
 
     def to_dict(self):
@@ -152,18 +146,22 @@ class WorkflowRunStateChange(object):
         for attr, _ in six.iteritems(self._types):
             value = getattr(self, attr)
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: x.to_dict() if hasattr(x, "to_dict") else x,
-                    value
-                ))
+                result[attr] = list(
+                    map(lambda x: x.to_dict() if hasattr(x, "to_dict") else x, value)
+                )
             elif hasattr(value, "to_dict"):
                 result[attr] = value.to_dict()
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], item[1].to_dict())
-                    if hasattr(item[1], "to_dict") else item,
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(
+                        lambda item: (
+                            (item[0], item[1].to_dict())
+                            if hasattr(item[1], "to_dict")
+                            else item
+                        ),
+                        value.items(),
+                    )
+                )
             else:
                 result[attr] = value
         if issubclass(WorkflowRunStateChange, dict):

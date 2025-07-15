@@ -8,3 +8,11 @@ test-translator-service:
 	@echo "Tests for translator service passed"
 
 test: install test-translator-service
+
+check: lint
+
+lint:
+	@black -t py312 --check . --exclude .venv
+
+lint-fix:
+	@black -t py312 . --exclude .venv

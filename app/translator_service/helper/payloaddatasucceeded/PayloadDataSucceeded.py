@@ -5,40 +5,54 @@ import re  # noqa: F401
 import six
 from enum import Enum
 
+
 class PayloadDataSucceeded(object):
 
-
     _types = {
-        'projectId': 'str',
-        'analysisId': 'str',
-        'userReference': 'str',
-        'timeCreated': 'str',
-        'timeModified': 'str',
-        'pipelineId': 'str',
-        'pipelineCode': 'str',
-        'pipelineDescription': 'str',
-        'pipelineUrn': 'str',
-        'instrumentRunId': 'str',
-        'basespaceRunId': 'str',
-        'samplesheetB64gz': 'str'
+        "projectId": "str",
+        "analysisId": "str",
+        "userReference": "str",
+        "timeCreated": "str",
+        "timeModified": "str",
+        "pipelineId": "str",
+        "pipelineCode": "str",
+        "pipelineDescription": "str",
+        "pipelineUrn": "str",
+        "instrumentRunId": "str",
+        "basespaceRunId": "str",
+        "samplesheetB64gz": "str",
     }
 
     _attribute_map = {
-        'projectId': 'projectId',
-        'analysisId': 'analysisId',
-        'userReference': 'userReference',
-        'timeCreated': 'timeCreated',
-        'timeModified': 'timeModified',
-        'pipelineId': 'pipelineId',
-        'pipelineCode': 'pipelineCode',
-        'pipelineDescription': 'pipelineDescription',
-        'pipelineUrn': 'pipelineUrn',
-        'instrumentRunId': 'instrumentRunId',
-        'basespaceRunId': 'basespaceRunId',
-        'samplesheetB64gz': 'samplesheetB64gz'
+        "projectId": "projectId",
+        "analysisId": "analysisId",
+        "userReference": "userReference",
+        "timeCreated": "timeCreated",
+        "timeModified": "timeModified",
+        "pipelineId": "pipelineId",
+        "pipelineCode": "pipelineCode",
+        "pipelineDescription": "pipelineDescription",
+        "pipelineUrn": "pipelineUrn",
+        "instrumentRunId": "instrumentRunId",
+        "basespaceRunId": "basespaceRunId",
+        "samplesheetB64gz": "samplesheetB64gz",
     }
 
-    def __init__(self, projectId=None, analysisId=None, userReference=None, timeCreated=None, timeModified=None, pipelineId=None, pipelineCode=None, pipelineDescription=None, pipelineUrn=None, instrumentRunId=None, basespaceRunId=None, samplesheetB64gz=None):  # noqa: E501
+    def __init__(
+        self,
+        projectId=None,
+        analysisId=None,
+        userReference=None,
+        timeCreated=None,
+        timeModified=None,
+        pipelineId=None,
+        pipelineCode=None,
+        pipelineDescription=None,
+        pipelineUrn=None,
+        instrumentRunId=None,
+        basespaceRunId=None,
+        samplesheetB64gz=None,
+    ):  # noqa: E501
         self._projectId = None
         self._analysisId = None
         self._userReference = None
@@ -65,7 +79,6 @@ class PayloadDataSucceeded(object):
         self.basespaceRunId = basespaceRunId
         self.samplesheetB64gz = samplesheetB64gz
 
-
     @property
     def projectId(self):
 
@@ -74,9 +87,7 @@ class PayloadDataSucceeded(object):
     @projectId.setter
     def projectId(self, projectId):
 
-
         self._projectId = projectId
-
 
     @property
     def analysisId(self):
@@ -86,9 +97,7 @@ class PayloadDataSucceeded(object):
     @analysisId.setter
     def analysisId(self, analysisId):
 
-
         self._analysisId = analysisId
-
 
     @property
     def userReference(self):
@@ -98,9 +107,7 @@ class PayloadDataSucceeded(object):
     @userReference.setter
     def userReference(self, userReference):
 
-
         self._userReference = userReference
-
 
     @property
     def timeCreated(self):
@@ -110,9 +117,7 @@ class PayloadDataSucceeded(object):
     @timeCreated.setter
     def timeCreated(self, timeCreated):
 
-
         self._timeCreated = timeCreated
-
 
     @property
     def timeModified(self):
@@ -122,9 +127,7 @@ class PayloadDataSucceeded(object):
     @timeModified.setter
     def timeModified(self, timeModified):
 
-
         self._timeModified = timeModified
-
 
     @property
     def pipelineId(self):
@@ -134,9 +137,7 @@ class PayloadDataSucceeded(object):
     @pipelineId.setter
     def pipelineId(self, pipelineId):
 
-
         self._pipelineId = pipelineId
-
 
     @property
     def pipelineCode(self):
@@ -146,9 +147,7 @@ class PayloadDataSucceeded(object):
     @pipelineCode.setter
     def pipelineCode(self, pipelineCode):
 
-
         self._pipelineCode = pipelineCode
-
 
     @property
     def pipelineDescription(self):
@@ -158,9 +157,7 @@ class PayloadDataSucceeded(object):
     @pipelineDescription.setter
     def pipelineDescription(self, pipelineDescription):
 
-
         self._pipelineDescription = pipelineDescription
-
 
     @property
     def pipelineUrn(self):
@@ -170,9 +167,7 @@ class PayloadDataSucceeded(object):
     @pipelineUrn.setter
     def pipelineUrn(self, pipelineUrn):
 
-
         self._pipelineUrn = pipelineUrn
-
 
     @property
     def instrumentRunId(self):
@@ -182,9 +177,7 @@ class PayloadDataSucceeded(object):
     @instrumentRunId.setter
     def instrumentRunId(self, instrumentRunId):
 
-
         self._instrumentRunId = instrumentRunId
-
 
     @property
     def basespaceRunId(self):
@@ -194,9 +187,7 @@ class PayloadDataSucceeded(object):
     @basespaceRunId.setter
     def basespaceRunId(self, basespaceRunId):
 
-
         self._basespaceRunId = basespaceRunId
-
 
     @property
     def samplesheetB64gz(self):
@@ -206,7 +197,6 @@ class PayloadDataSucceeded(object):
     @samplesheetB64gz.setter
     def samplesheetB64gz(self, samplesheetB64gz):
 
-
         self._samplesheetB64gz = samplesheetB64gz
 
     def to_dict(self):
@@ -215,18 +205,22 @@ class PayloadDataSucceeded(object):
         for attr, _ in six.iteritems(self._types):
             value = getattr(self, attr)
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: x.to_dict() if hasattr(x, "to_dict") else x,
-                    value
-                ))
+                result[attr] = list(
+                    map(lambda x: x.to_dict() if hasattr(x, "to_dict") else x, value)
+                )
             elif hasattr(value, "to_dict"):
                 result[attr] = value.to_dict()
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], item[1].to_dict())
-                    if hasattr(item[1], "to_dict") else item,
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(
+                        lambda item: (
+                            (item[0], item[1].to_dict())
+                            if hasattr(item[1], "to_dict")
+                            else item
+                        ),
+                        value.items(),
+                    )
+                )
             else:
                 result[attr] = value
         if issubclass(PayloadDataSucceeded, dict):

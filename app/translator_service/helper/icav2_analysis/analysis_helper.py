@@ -15,19 +15,17 @@ from helper.samplesheet.samplesheet_helper import read_v2_samplesheet
 import logging
 
 # Wrapica imports
-from wrapica.project_data import (
-    read_icav2_file_contents_to_string
-)
+from wrapica.project_data import read_icav2_file_contents_to_string
 
-from wrapica.libica_models import (
-    ProjectData, AnalysisInput
-)
+from wrapica.libica_models import ProjectData, AnalysisInput
 from wrapica.project_data import (
     find_project_data_bulk,
-    get_file_by_file_name_from_project_data_list, get_project_data_obj_by_id,
+    get_file_by_file_name_from_project_data_list,
+    get_project_data_obj_by_id,
 )
 from wrapica.project_analysis import (
-    get_analysis_output_object_from_analysis_output_code, get_analysis_input_object_from_analysis_input_code
+    get_analysis_output_object_from_analysis_output_code,
+    get_analysis_input_object_from_analysis_input_code,
 )
 from wrapica.enums import DataType
 
@@ -40,33 +38,36 @@ logger.setLevel(logging.INFO)
 
 
 def get_bclconvert_outputs_from_analysis_id(
-    project_id: str,
-    analysis_id: str
+    project_id: str, analysis_id: str
 ) -> Tuple[str, List[ProjectData]]:
 
-    bclconvert_output_folder_id = get_analysis_output_object_from_analysis_output_code(
-        project_id,
-        analysis_id,
-        "Output"
-    ).data[0].data_id
+    bclconvert_output_folder_id = (
+        get_analysis_output_object_from_analysis_output_code(
+            project_id, analysis_id, "Output"
+        )
+        .data[0]
+        .data_id
+    )
 
     # Return all files recursively
     return bclconvert_output_folder_id, find_project_data_bulk(
         project_id=project_id,
         parent_folder_id=bclconvert_output_folder_id,
-        data_type=DataType.FILE
+        data_type=DataType.FILE,
     )
 
 
-def get_run_folder_obj_from_analysis_id(project_id: str, analysis_id: str) -> ProjectData:
+def get_run_folder_obj_from_analysis_id(
+    project_id: str, analysis_id: str
+) -> ProjectData:
     """
     Query the outputs object from analysis id
     """
 
-    run_folder_input: AnalysisInput = get_analysis_input_object_from_analysis_input_code(
-        project_id,
-        analysis_id,
-        "run_folder"
+    run_folder_input: AnalysisInput = (
+        get_analysis_input_object_from_analysis_input_code(
+            project_id, analysis_id, "run_folder"
+        )
     )
 
     # Get the folder ID
@@ -99,21 +100,33 @@ def get_basespace_run_id_from_run_folder_name(run_folder_name: str) -> int:
     )
 
 
-def get_bssh_json_file_id_from_analysis_output_list(analysis_output: List[ProjectData]) -> str:
+def get_bssh_json_file_id_from_analysis_output_list(
+    analysis_output: List[ProjectData],
+) -> str:
     """
     Get the bssh json file id from the analysis output object
     :param analysis_output:
     :return:
     """
-    return get_file_by_file_name_from_project_data_list("bsshoutput.json", analysis_output).data.id
+    return get_file_by_file_name_from_project_data_list(
+        "bsshoutput.json", analysis_output
+    ).data.id
 
 
-def get_run_info_xml_file_id_analysis_output_list(analysis_output: List[ProjectData]) -> str:
-    return get_file_by_file_name_from_project_data_list("RunInfo.xml", analysis_output).data.id
+def get_run_info_xml_file_id_analysis_output_list(
+    analysis_output: List[ProjectData],
+) -> str:
+    return get_file_by_file_name_from_project_data_list(
+        "RunInfo.xml", analysis_output
+    ).data.id
 
 
-def get_samplesheet_file_id_from_analysis_output_list(analysis_output: List[ProjectData]) -> str:
-    return get_file_by_file_name_from_project_data_list("SampleSheet.csv", analysis_output).data.id
+def get_samplesheet_file_id_from_analysis_output_list(
+    analysis_output: List[ProjectData],
+) -> str:
+    return get_file_by_file_name_from_project_data_list(
+        "SampleSheet.csv", analysis_output
+    ).data.id
 
 
 def compress_dict(input_dict: Union[Dict, List]) -> str:
@@ -126,11 +139,9 @@ def compress_dict(input_dict: Union[Dict, List]) -> str:
     """
 
     # Compress
-    return b64encode(
-        gzip.compress(
-            json.dumps(input_dict).encode('utf-8')
-        )
-    ).decode("utf-8")
+    return b64encode(gzip.compress(json.dumps(input_dict).encode("utf-8"))).decode(
+        "utf-8"
+    )
 
 
 def collect_analysis_objects(project_id: str, analysis_id: str) -> Dict:
@@ -141,27 +152,28 @@ def collect_analysis_objects(project_id: str, analysis_id: str) -> Dict:
 
     # Get the analysis output path
     logger.info("Collecting output data objects")
-    bclconvert_output_folder_id, bclconvert_output_data_list = get_bclconvert_outputs_from_analysis_id(
-        project_id=project_id,
-        analysis_id=analysis_id
+    bclconvert_output_folder_id, bclconvert_output_data_list = (
+        get_bclconvert_outputs_from_analysis_id(
+            project_id=project_id, analysis_id=analysis_id
+        )
     )
 
     # Get the output folder object
     logger.info("Get bclconvert output folder object")
     bclconvert_output_folder_obj = get_project_data_obj_by_id(
-        project_id=project_id,
-        data_id=bclconvert_output_folder_id
+        project_id=project_id, data_id=bclconvert_output_folder_id
     )
 
     # Get the bssh_json
     logger.info("Collecting bssh json file id")
-    bssh_output_file_id = get_bssh_json_file_id_from_analysis_output_list(bclconvert_output_data_list)
+    bssh_output_file_id = get_bssh_json_file_id_from_analysis_output_list(
+        bclconvert_output_data_list
+    )
 
     # Read the json object
     bssh_json_dict = json.loads(
         read_icav2_file_contents_to_string(
-            project_id=project_id,
-            data_id=bssh_output_file_id
+            project_id=project_id, data_id=bssh_output_file_id
         )
     )
 
@@ -169,28 +181,29 @@ def collect_analysis_objects(project_id: str, analysis_id: str) -> Dict:
     # We also collect the bcl convert output object to get relative files from this directory
     # Such as the IndexMetricsOut.bin file in the Reports Directory
     # Which we also copy over to the interops directory
-    bcl_convert_output_path = Path(bclconvert_output_folder_obj.data.details.path) / "output"
+    bcl_convert_output_path = (
+        Path(bclconvert_output_folder_obj.data.details.path) / "output"
+    )
     bclconvert_output_data_list = list(
         filter(
-            lambda data_obj:
-                (
-                    # File is inside 'output' directory
-                    data_obj.data.details.path.startswith(
-                        str(bcl_convert_output_path) + "/"
-                    ) and not (
-                        # File is not the fastq_list_s3.csv or TSO500L_fastq_list_s3.csv
-                        # This file is just a list of presigned urls that will expire in a week
-                        data_obj.data.details.name.endswith("fastq_list_s3.csv")
-                    )
-                ),
-            bclconvert_output_data_list
+            lambda data_obj: (
+                # File is inside 'output' directory
+                data_obj.data.details.path.startswith(
+                    str(bcl_convert_output_path) + "/"
+                )
+                and not (
+                    # File is not the fastq_list_s3.csv or TSO500L_fastq_list_s3.csv
+                    # This file is just a list of presigned urls that will expire in a week
+                    data_obj.data.details.name.endswith("fastq_list_s3.csv")
+                )
+            ),
+            bclconvert_output_data_list,
         )
     )
 
     # Get the analysis input run folder
     run_folder_object = get_run_folder_obj_from_analysis_id(
-        project_id=project_id,
-        analysis_id=analysis_id
+        project_id=project_id, analysis_id=analysis_id
     )
 
     # Get the basespace run id from the run folder name
@@ -198,7 +211,6 @@ def collect_analysis_objects(project_id: str, analysis_id: str) -> Dict:
     basespace_run_id = get_basespace_run_id_from_run_folder_name(
         run_folder_name=run_folder_object.data.details.name
     )
-
 
     # Get run info (to collect the run id)
     logger.info("Collecting the run info xml file")
@@ -221,7 +233,7 @@ def collect_analysis_objects(project_id: str, analysis_id: str) -> Dict:
     samplesheet_dict = read_v2_samplesheet(
         project_id=project_id,
         samplesheet_data_id=samplesheet_file_id,
-        runinfo_data_id=run_info_file_id
+        runinfo_data_id=run_info_file_id,
     )
 
     return {

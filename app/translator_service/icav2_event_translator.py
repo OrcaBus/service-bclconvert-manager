@@ -68,6 +68,7 @@ The event tranlator then returns the following:
     }
 }
 """
+
 import os
 import json
 import logging
@@ -87,8 +88,8 @@ from helper.aws_ssm_helper import set_icav2_env_vars
 from helper.generate_db_uuid import generate_db_uuid
 from helper.generate_portal_run_id import generate_portal_run_id
 
-events = boto3.client("events", region_name='ap-southeast-2')
-dynamodb = boto3.client('dynamodb', region_name='ap-southeast-2')
+events = boto3.client("events", region_name="ap-southeast-2")
+dynamodb = boto3.client("dynamodb", region_name="ap-southeast-2")
 
 # Set loggers
 logger = logging.getLogger()
@@ -99,7 +100,9 @@ def handler(event, context):
     assert os.getenv("EVENT_BUS_NAME"), "EVENT_BUS_NAME environment variable is not set"
     assert os.getenv("TABLE_NAME"), "TABLE_NAME environment variable is not set"
     assert os.getenv("ICAV2_BASE_URL"), "ICAV2_BASE_URL environment variable is not set"
-    assert os.getenv("ICAV2_ACCESS_TOKEN_SECRET_ID"), "ICAV2_ACCESS_TOKEN_SECRET_ID environment variable is not set"
+    assert os.getenv(
+        "ICAV2_ACCESS_TOKEN_SECRET_ID"
+    ), "ICAV2_ACCESS_TOKEN_SECRET_ID environment variable is not set"
 
     event_bus_name = os.getenv("EVENT_BUS_NAME")
     table_name = os.getenv("TABLE_NAME")
@@ -122,7 +125,9 @@ def handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps("Internal event sent to the event bus and both msg stored in the DynamoDB table.")
+        "body": json.dumps(
+            "Internal event sent to the event bus and both msg stored in the DynamoDB table."
+        ),
     }
 
 
@@ -134,8 +139,12 @@ def send_internal_event_to_eventbus(internal_ica_event, event_bus_name) -> None:
                 {
                     "Source": internal_ica_event.source,
                     "DetailType": internal_ica_event.detail_type,
-                    "Detail": json.dumps(WorkflowRunStateChangeMarshaller.marshall(internal_ica_event.detail)),
-                    "EventBusName": event_bus_name
+                    "Detail": json.dumps(
+                        WorkflowRunStateChangeMarshaller.marshall(
+                            internal_ica_event.detail
+                        )
+                    ),
+                    "EventBusName": event_bus_name,
                 }
             ]
         )
@@ -147,19 +156,27 @@ def send_internal_event_to_eventbus(internal_ica_event, event_bus_name) -> None:
 # Store the internal event in the DynamoDB table
 def store_events_into_dynamodb(internal_ica_event, table_name, event_details) -> None:
     try:
-        db_uuid = generate_db_uuid().get("db_uuid",'')
+        db_uuid = generate_db_uuid().get("db_uuid", "")
         dynamodb.put_item(
             TableName=table_name,
             Item={
-                'id': {'S': db_uuid},
-                'id_type': {'S': 'db_uuid'},
-                'analysis_id': {'S': event_details.get("payload", {}).get("id", '')},
-                'analysis_status': {'S': internal_ica_event.detail.status}, # 'SUCCEEDED', 'FAILED', 'ABORTED'
-                "portal_run_id": {'S': internal_ica_event.detail.portalRunId},
-                'original_external_event': {'S': json.dumps(event_details)},
-                'translated_internal_ica_event': {'S': json.dumps(WorkflowRunStateChangeMarshaller.marshall(internal_ica_event.detail))},
-                'timestamp': {'S': internal_ica_event.detail.timestamp}
-            }
+                "id": {"S": db_uuid},
+                "id_type": {"S": "db_uuid"},
+                "analysis_id": {"S": event_details.get("payload", {}).get("id", "")},
+                "analysis_status": {
+                    "S": internal_ica_event.detail.status
+                },  # 'SUCCEEDED', 'FAILED', 'ABORTED'
+                "portal_run_id": {"S": internal_ica_event.detail.portalRunId},
+                "original_external_event": {"S": json.dumps(event_details)},
+                "translated_internal_ica_event": {
+                    "S": json.dumps(
+                        WorkflowRunStateChangeMarshaller.marshall(
+                            internal_ica_event.detail
+                        )
+                    )
+                },
+                "timestamp": {"S": internal_ica_event.detail.timestamp},
+            },
         )
         logger.info(f"Original and Internal events stored in the DynamoDB table.")
 
@@ -167,24 +184,20 @@ def store_events_into_dynamodb(internal_ica_event, table_name, event_details) ->
         dynamodb.update_item(
             TableName=table_name,
             Key={
-                'id': {'S': event_details.get("payload", {}).get("id", '')},
-                'id_type': {'S': 'analysis_id'}
+                "id": {"S": event_details.get("payload", {}).get("id", "")},
+                "id_type": {"S": "analysis_id"},
             },
-            UpdateExpression='SET db_uuid = :db_uuid',
-            ExpressionAttributeValues={
-                ':db_uuid': {'S': db_uuid}
-            }
+            UpdateExpression="SET db_uuid = :db_uuid",
+            ExpressionAttributeValues={":db_uuid": {"S": db_uuid}},
         )
         dynamodb.update_item(
             TableName=table_name,
             Key={
-                'id': {'S': internal_ica_event.detail.portalRunId},
-                'id_type': {'S': 'portal_run_id'}
+                "id": {"S": internal_ica_event.detail.portalRunId},
+                "id_type": {"S": "portal_run_id"},
             },
-            UpdateExpression='SET db_uuid = :db_uuid',
-            ExpressionAttributeValues={
-                ':db_uuid': {'S': db_uuid}
-            }
+            UpdateExpression="SET db_uuid = :db_uuid",
+            ExpressionAttributeValues={":db_uuid": {"S": db_uuid}},
         )
         logger.info(f"db_uuid updated in anaylsis_id and portal_run_id record.")
     except Exception as e:
@@ -204,68 +217,73 @@ def translate_to_aws_event(event) -> AWSEvent:
 # Convert from entity module to internal event details
 def get_event_details(event) -> WorkflowRunStateChange:
     # Extract relevant fields from the event payload
-    analysis_status = event.get("eventParameters", {}).get("analysisStatus", 'UNSPECIFIED')
+    analysis_status = event.get("eventParameters", {}).get(
+        "analysisStatus", "UNSPECIFIED"
+    )
 
     payload = event.get("payload", {})
-    analysis_id = payload.get("id", '')
+    analysis_id = payload.get("id", "")
     pipeline = payload.get("pipeline", {})
 
-    event_name, version = parse_event_code(pipeline.get("code", ''))
+    event_name, version = parse_event_code(pipeline.get("code", ""))
 
     if analysis_status != "SUCCEEDED":
         # generate internal event without payload
         return WorkflowRunStateChange(
             portalRunId=get_portal_run_id(analysis_id),
             executionId=analysis_id,
-            timestamp=datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            timestamp=datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            ),
             status=analysis_status,
             workflowName=event_name,
             workflowVersion=version,
-            workflowRunName=payload.get("userReference", ''),
+            workflowRunName=payload.get("userReference", ""),
         )
 
     succeeded_payload_data = get_succeeded_payload_data(event)
 
     # generate internal event with required attributes
     return WorkflowRunStateChange(
-        portalRunId=get_portal_run_id(payload.get("id", '')),
+        portalRunId=get_portal_run_id(payload.get("id", "")),
         executionId=analysis_id,
-        timestamp=datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        timestamp=datetime.datetime.now(datetime.timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        ),
         status=analysis_status,
         workflowName=event_name,
         workflowVersion=version,
-        workflowRunName=payload.get("userReference", ''),
+        workflowRunName=payload.get("userReference", ""),
         payload={
             "version": "0.1.0",
-            "data": PayloadDataMarshaller.marshall(succeeded_payload_data)
-        }
+            "data": PayloadDataMarshaller.marshall(succeeded_payload_data),
+        },
     )
+
 
 def get_succeeded_payload_data(event) -> PayloadDataSucceeded:
     # Extract relevant fields from the event payload
-    project_id = event.get("projectId", '')
+    project_id = event.get("projectId", "")
 
     payload = event.get("payload", {})
-    analysis_id = payload.get("id", '')
+    analysis_id = payload.get("id", "")
     pipeline = payload.get("pipeline", {})
 
-    analysis_outputs = collect_analysis_objects(
-        project_id, analysis_id
-    )
+    analysis_outputs = collect_analysis_objects(project_id, analysis_id)
 
     return PayloadDataSucceeded(
         projectId=project_id,
         analysisId=analysis_id,
-        userReference=payload.get("userReference", ''),
+        userReference=payload.get("userReference", ""),
         timeCreated=payload.get("timeCreated", ""),
         timeModified=payload.get("timeModified", ""),
-        pipelineId=pipeline.get("id", ''),
-        pipelineCode=pipeline.get("code", ''),
-        pipelineDescription=pipeline.get("description", ''),
-        pipelineUrn=pipeline.get("urn", ''),
+        pipelineId=pipeline.get("id", ""),
+        pipelineCode=pipeline.get("code", ""),
+        pipelineDescription=pipeline.get("description", ""),
+        pipelineUrn=pipeline.get("urn", ""),
         instrumentRunId=analysis_outputs.get("instrument_run_id"),
         basespaceRunId=analysis_outputs.get("basespace_run_id"),
-        samplesheetB64gz=analysis_outputs.get("samplesheet_b64gz")
+        samplesheetB64gz=analysis_outputs.get("samplesheet_b64gz"),
     )
 
 
@@ -276,13 +294,13 @@ def get_portal_run_id(analysis_id: str) -> str:
     try:
         response = dynamodb.query(
             TableName=table_name,
-            KeyConditionExpression='id = :analysis_id and id_type = :id_type',
+            KeyConditionExpression="id = :analysis_id and id_type = :id_type",
             ExpressionAttributeValues={
-                ':analysis_id': {'S': analysis_id},
-                ':id_type': {'S': 'analysis_id'}
-            }
+                ":analysis_id": {"S": analysis_id},
+                ":id_type": {"S": "analysis_id"},
+            },
         )
-        items = response.get('Items', [])
+        items = response.get("Items", [])
 
         # check if the response.Items has items
         # if exist return the portal run id
@@ -306,21 +324,23 @@ def generate_new_portal_run(analysis_id: str) -> str:
         dynamodb.put_item(
             TableName=table_name,
             Item={
-                'id': {'S': analysis_id},
-                'id_type': {'S': 'analysis_id'},
-                "portal_run_id": {'S': new_portal_run_id}
-            }
+                "id": {"S": analysis_id},
+                "id_type": {"S": "analysis_id"},
+                "portal_run_id": {"S": new_portal_run_id},
+            },
         )
         dynamodb.put_item(
             TableName=table_name,
             Item={
-                'id': {'S': new_portal_run_id},
-                'id_type': {'S': 'portal_run_id'},
-                "analysis_id": {'S': analysis_id}
-            }
+                "id": {"S": new_portal_run_id},
+                "id_type": {"S": "portal_run_id"},
+                "analysis_id": {"S": analysis_id},
+            },
         )
     except Exception as e:
-        raise Exception("Failed to store new portal run id in the DynamoDB table. Error: ", e)
+        raise Exception(
+            "Failed to store new portal run id in the DynamoDB table. Error: ", e
+        )
     logger.info(f"New portal run id created and stored in the DynamoDB table.")
     return new_portal_run_id
 
@@ -333,7 +353,7 @@ def parse_event_code(event_code):
     :return:
     """
 
-    if event_code == 'BCL_Convert_4-4-4_ORA_2-7-0_Default_Large':
+    if event_code == "BCL_Convert_4-4-4_ORA_2-7-0_Default_Large":
         return "BCLConvert", "4.4.4"
 
     # Split the event code by space to separate the event name and version string
@@ -345,7 +365,7 @@ def parse_event_code(event_code):
     version_part = parts[1]
 
     # Remove the leading 'v' from the version string
-    if not version_part.startswith('v'):
+    if not version_part.startswith("v"):
         raise ValueError("Version must start with 'v'")
 
     version_numbers = version_part[1:]  # Remove the 'v'
@@ -353,7 +373,9 @@ def parse_event_code(event_code):
     # Split the version numbers by underscore
     version_numbers = version_numbers.split("_")
     if len(version_numbers) != 3:
-        raise ValueError("Version must be in the format (Semantic Version) 'Major_Minor_Patch'")
+        raise ValueError(
+            "Version must be in the format (Semantic Version) 'Major_Minor_Patch'"
+        )
 
     # Join the version numbers with dots to form the standard version format
     version = ".".join(version_numbers)

@@ -5,18 +5,12 @@ import re  # noqa: F401
 import six
 from enum import Enum
 
+
 class Payload(object):
 
+    _types = {"version": "str", "data": "object"}
 
-    _types = {
-        'version': 'str',
-        'data': 'object'
-    }
-
-    _attribute_map = {
-        'version': 'version',
-        'data': 'data'
-    }
+    _attribute_map = {"version": "version", "data": "data"}
 
     def __init__(self, version=None, data=None):  # noqa: E501
         self._version = None
@@ -24,7 +18,6 @@ class Payload(object):
         self.discriminator = None
         self.version = version
         self.data = data
-
 
     @property
     def version(self):
@@ -34,9 +27,7 @@ class Payload(object):
     @version.setter
     def version(self, version):
 
-
         self._version = version
-
 
     @property
     def data(self):
@@ -46,7 +37,6 @@ class Payload(object):
     @data.setter
     def data(self, data):
 
-
         self._data = data
 
     def to_dict(self):
@@ -55,18 +45,22 @@ class Payload(object):
         for attr, _ in six.iteritems(self._types):
             value = getattr(self, attr)
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: x.to_dict() if hasattr(x, "to_dict") else x,
-                    value
-                ))
+                result[attr] = list(
+                    map(lambda x: x.to_dict() if hasattr(x, "to_dict") else x, value)
+                )
             elif hasattr(value, "to_dict"):
                 result[attr] = value.to_dict()
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], item[1].to_dict())
-                    if hasattr(item[1], "to_dict") else item,
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(
+                        lambda item: (
+                            (item[0], item[1].to_dict())
+                            if hasattr(item[1], "to_dict")
+                            else item
+                        ),
+                        value.items(),
+                    )
+                )
             else:
                 result[attr] = value
         if issubclass(Payload, dict):

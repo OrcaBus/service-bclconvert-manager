@@ -18,14 +18,14 @@ if typing.TYPE_CHECKING:
 
 
 # AWS things
-def get_ssm_client() -> 'SSMClient':
+def get_ssm_client() -> "SSMClient":
     """
     Return SSM client
     """
     return boto3.client("ssm")
 
 
-def get_secrets_manager_client() -> 'SecretsManagerClient':
+def get_secrets_manager_client() -> "SecretsManagerClient":
     """
     Return Secrets Manager client
     """
@@ -45,7 +45,9 @@ def get_secret(secret_arn: str) -> str:
     """
     Return secret value
     """
-    return get_secrets_manager_client().get_secret_value(SecretId=secret_arn)["SecretString"]
+    return get_secrets_manager_client().get_secret_value(SecretId=secret_arn)[
+        "SecretString"
+    ]
 
 
 # Set the icav2 environment variables
@@ -55,6 +57,4 @@ def set_icav2_env_vars():
     :return:
     """
     environ["ICAV2_BASE_URL"] = environ["ICAV2_BASE_URL"]
-    environ["ICAV2_ACCESS_TOKEN"] = get_secret(
-        environ["ICAV2_ACCESS_TOKEN_SECRET_ID"]
-    )
+    environ["ICAV2_ACCESS_TOKEN"] = get_secret(environ["ICAV2_ACCESS_TOKEN_SECRET_ID"])
