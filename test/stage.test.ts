@@ -54,7 +54,7 @@ function applyNagSuppression(stack: Stack) {
   );
   NagSuppressions.addStackSuppressions(
     stack,
-    [{ id: 'AwsSolutions-S1', reason: 'this is an example bucket' }],
+    [{ id: 'AwsSolutions-IAM4', reason: 'allow to use AWS managed policy' }],
     true
   );
 }
