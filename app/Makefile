@@ -1,8 +1,10 @@
+install:
+	@pip install -r deps/requirements-test.txt
 
-check:
-	echo "No check command defined."
-	exit 1
+test-translator-service:
+	@echo "Running tests for translator service"
+	@PYTHONPATH=./translator_service:$$PYTHONPATH \
+	python -m unittest translator_service/tests/test_icav2_event_translator.py
+	@echo "Tests for translator service passed"
 
-fix:
-	echo "No fix command defined."
-	exit 1
+test: install test-translator-service
