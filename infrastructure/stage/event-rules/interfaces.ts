@@ -1,0 +1,37 @@
+import { EventPattern, IEventBus, Rule } from 'aws-cdk-lib/aws-events';
+
+export type EventBridgeRuleName =
+  // Listen to SRM
+  | 'sequenceRunStateChangeRule'
+  // Handle WRSC events
+  | 'wrscEventRuleLegacy'
+  | 'wrscEventRule';
+
+export const eventBridgeRuleNameList: Array<EventBridgeRuleName> = [
+  // Listen to SRM
+  'sequenceRunStateChangeRule',
+  // Handle WRSC events
+  'wrscEventRuleLegacy',
+  'wrscEventRule',
+];
+
+export interface EventBridgeRuleProps {
+  ruleName: EventBridgeRuleName;
+  eventBus: IEventBus;
+  eventPattern: EventPattern;
+}
+
+export interface EventBridgeRuleObject {
+  ruleName: EventBridgeRuleName;
+  ruleObject: Rule;
+}
+
+export interface BuildStandardRuleProps {
+  ruleName: EventBridgeRuleName;
+  eventBus: IEventBus;
+}
+
+export interface BuildEventBridgeRulesProps {
+  /* Event Buses */
+  eventBus: IEventBus;
+}

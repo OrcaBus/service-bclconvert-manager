@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+
+"""
+Find a BCLConvert workflow
+
+There are two modes for input in this lambda:
+
+# From the SRM event
+
+* basespaceRunId, aka (v1pre3id),
+* status (DRAFT)
+
+# From the ICA event
+
+* analysisId
+
+For both events we must query the workflow manager for all bclconvert workflows and filter to the one we want
+"""
+
+# Imports
+# Standard
+
+# Layer
+from orcabus_api_tools.workflow import (
+    list_workflow_runs_by_workflow_name,
+    get_latest_payload_from_workflow_run
+)
+
+# Globals
+WORKFLOW_RUN_NAME = 'bclconvert'
+
+def handler(event, context):
+    # Get inputs
+    # SRM Mode
+    basespace_run_id = event.get('basespaceRunId')
+    status = event.get('status')
+    # ICA Mode
+    analysis_id = event.get('analysisId')
+
+    # Check one mode is used
+    if (
+            not (basespace_run_id and status) or
+            not analysis_id
+    ):
+        raise ValueError("Must provide either basespaceRunId + status (SRM mode) or analysisId (ICA mode)")
+
+    # Get bclconvert workflow objects
+    bclconvert_workflow_list = list_workflow_runs_by_workflow_name(WORKFLOW_RUN_NAME)
+
+    if len(bclconvert_workflow_list) == 0:
+        return None
+
+    # SRM mode
+    if (basespace_run_id and status):
+        try:
+            workflow_run_object = next(filter(
+                lambda workflow_iter_: (
+                    workflow_iter_['status'] == status and
+                    ( get_latest_payload_from_workflow_run(workflow_iter_['orcabusId']).get("data", {}).get("tags", {}).get("basespaceRunId") == basespace_run_id )
+                ),
+                bclconvert_workflow_list
+            ))
+        except StopIteration:
+            return None
+
+    # ICA mode
+    else:
+        try:
+            workflow_run_object = next(filter(
+                lambda workflow_iter_: (
+                    get_latest_payload_from_workflow_run(workflow_iter_['orcabusId']).get("data", {}).get("engineParameters", {}).get("analysisId") == analysis_id
+                ),
+                bclconvert_workflow_list
+            ))
+        except StopIteration:
+            return None
+
+    return {
+        "workflowRunObject": workflow_run_object
+    }

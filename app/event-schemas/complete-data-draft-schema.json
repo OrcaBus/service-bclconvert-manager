@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "icav2Uri": {
+      "type": "string",
+      "pattern": "^icav2://[a-zA-Z0-9_-]+/[a-zA-Z0-9_./-]+"
+    },
+    "icav2UriDirectory": {
+      "type": "string",
+      "pattern": "^icav2://[a-zA-Z0-9_-]+/[a-zA-Z0-9_./-]+/$"
+    },
+    "tags": {
+      "type": "object",
+      "properties": {
+        "instrumentRunId": {
+          "type": "string",
+          "examples": ["251003_A00130_0384_AHL7LWDSXF"]
+        },
+        "basespaceRunId": {
+          "type": "number",
+          "examples": [1234567890]
+        },
+        "experimentRunName": {
+          "type": "string",
+          "examples": ["Name of the run"]
+        }
+      },
+      "required": ["instrumentRunId", "basespaceRunId", "experimentRunName"]
+    },
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "inputUri": {
+          "$ref": "#/$defs/icav2UriDirectory"
+        },
+        "sampleSheetUri": {
+          "$ref": "#/$defs/icav2Uri"
+        }
+      },
+      "required": ["inputUri", "sampleSheetUri"]
+    },
+    "engineParameters": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "pipelineId": {
+          "type": "string"
+        },
+        "analysisId": {
+          "type": "string"
+        },
+        "outputUri": {
+          "$ref": "#/$defs/icav2UriDirectory"
+        }
+      },
+      "required": ["projectId", "pipelineId", "analysisId"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "tags": {
+      "$ref": "#/$defs/tags"
+    },
+    "inputs": {
+      "$ref": "#/$defs/inputs"
+    },
+    "engineParameters": {
+      "$ref": "#/$defs/engineParameters"
+    }
+  },
+  "required": ["tags", "inputs", "engineParameters"]
+}

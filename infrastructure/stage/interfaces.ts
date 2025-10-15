@@ -1,0 +1,26 @@
+import { SsmParameterPaths, SsmParameterValues } from './ssm/interfaces';
+
+export type WorkflowVersionType = '4.4.4';
+
+export interface StatefulApplicationStackConfig {
+  // Values
+  // Detail
+  ssmParameterValues: SsmParameterValues;
+
+  // Keys
+  ssmParameterPaths: SsmParameterPaths;
+}
+
+/**
+ * Stateless application stack interface.
+ */
+export interface StatelessApplicationStackConfig {
+  // Event Stuff
+  eventBusName: string;
+
+  // Workflow manager stuff
+  isNewWorkflowManagerDeployed: boolean;
+
+  // SSM Parameters
+  ssmParameterPaths: SsmParameterPaths;
+}
