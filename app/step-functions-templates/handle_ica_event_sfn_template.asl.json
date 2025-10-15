@@ -1,0 +1,198 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Set vars",
+  "States": {
+    "Set vars": {
+      "Type": "Pass",
+      "Next": "Get valid pipeline ids",
+      "Assign": {
+        "status": "{% $states.input.status %}",
+        "projectId": "{% $states.input.projectId %}",
+        "pipelineId": "{% $states.input.payload.pipeline.id %}",
+        "analysisId": "{% $states.input.payload.id %}"
+      }
+    },
+    "Get valid pipeline ids": {
+      "Type": "Task",
+      "Arguments": {
+        "Name": "${__valid_pipeline_id_list_ssm_parameter_name__}"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:ssm:getParameter",
+      "Next": "Is relevant pipeline id",
+      "Output": {
+        "validPipelineIdList": "{% $parse($states.result.Parameter.Value) %}"
+      }
+    },
+    "Is relevant pipeline id": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Is relevant status",
+          "Condition": "{% $pipelineId in $states.input.validPipelineIdList %}",
+          "Comment": "Pipeline is relevant"
+        }
+      ],
+      "Default": "Irrelevant analysis / status"
+    },
+    "Is relevant status": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Get BCLConvert workflow run object",
+          "Condition": "{% $status in [ \n  \"INITIALIZING\",\n  \"IN_PROGRESS\", \n  \"SUCCEEDED\", \n  \"FAILED\",\n  \"FAILED_FINAL\",\n  \"ABORTED\"\n] %}",
+          "Comment": "Status is relevant"
+        }
+      ],
+      "Default": "Irrelevant analysis / status"
+    },
+    "Irrelevant analysis / status": {
+      "Type": "Pass",
+      "End": true
+    },
+    "Get BCLConvert workflow run object": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${__find_workflow_lambda_function_arn__}",
+        "Payload": {
+          "analysisId": "{% $analysisId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "Has Workflow Run Object",
+      "Output": {},
+      "Assign": {
+        "workflowRunObject": "{% $states.result.Payload.workflowRunObject ? $states.result.Payload.workflowRunObject : null %}"
+      }
+    },
+    "Has Workflow Run Object": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Update workflow run object",
+          "Condition": "{% $workflowRunObject ? true : false %}",
+          "Comment": "Update existing workflow object"
+        }
+      ],
+      "Default": "Create New BCLConvert Workflow Object"
+    },
+    "Update workflow run object": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${__update_workflow_run_object_lambda_function_arn__}",
+        "Payload": {
+          "portalRunId": "{% $workflowRunObject.portalRunId %}",
+          "projectId": "{% $projectId %}",
+          "pipelineId": "{% $pipelineId %}",
+          "analysisId": "{% $analysisId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "New WRM is deployed",
+      "Output": {},
+      "Assign": {
+        "workflowRunUpdate": "{% $states.result.Payload.workflowRunUpdate %}"
+      }
+    },
+    "New WRM is deployed": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Put workflow run update event",
+          "Condition": "{% ${__new_workflow_manager_is_deployed__} %}",
+          "Comment": "New workflow manager is deployed"
+        }
+      ],
+      "Default": "Put workflow run state change event"
+    },
+    "Put workflow run update event": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "Detail": "{% $merge([\n  $workflowRunObject,\n  {\n    \"timestamp\": $now()  }\n]) %}",
+            "DetailType": "${__workflow_run_update_detail_type__}",
+            "EventBusName": "${__event_bus_name__}",
+            "Source": "${__stack_source__}"
+          }
+        ]
+      },
+      "End": true
+    },
+    "Put workflow run state change event": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "Detail": "{% $merge([\n  $workflowRunObject,\n  {\n    \"timestamp\": $now()  }\n]) ~>\n/* Renamed libraries to linkedLibraries using the transform method */\n| $ | {\"linkedLibraries\": libraries}, [\"libraries\"] | ~>\n/* Renamed workflowName and workflowVersion using the transform method */\n| $ | {\"workflowName\": workflow.name, \"workflowVersion\": workflow.version}, [\"workflow\"] | %}",
+            "DetailType": "${__workflow_run_state_change_detail_type__}",
+            "EventBusName": "${__event_bus_name__}",
+            "Source": "${__stack_source__}"
+          }
+        ]
+      },
+      "End": true
+    },
+    "Create New BCLConvert Workflow Object": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Output": {},
+      "Arguments": {
+        "FunctionName": "${__create_new_workflow_run_object_lambda_function_arn__}",
+        "Payload": {
+          "projectId": "{% $projectId %}",
+          "pipelineId": "{% $pipelineId %}",
+          "analysisId": "{% $analysisId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "New WRM is deployed",
+      "Assign": {
+        "workflowRunUpdate": "{% $states.result.Payload.workflowRunUpdate %}"
+      }
+    }
+  },
+  "QueryLanguage": "JSONata"
+}
