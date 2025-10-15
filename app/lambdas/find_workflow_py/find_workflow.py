@@ -39,7 +39,7 @@ def handler(event, context):
 
     # Check one mode is used
     if (
-            not (basespace_run_id and status) or
+            not (basespace_run_id or status) and
             not analysis_id
     ):
         raise ValueError("Must provide either basespaceRunId + status (SRM mode) or analysisId (ICA mode)")
