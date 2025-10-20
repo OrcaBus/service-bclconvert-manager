@@ -70,7 +70,7 @@ export const SLACK_TOPIC_NAME = 'AwsChatBotTopic';
 /* Future proofing */
 export const NEW_WORKFLOW_MANAGER_IS_DEPLOYED: Record<StageName, boolean> = {
   BETA: true,
-  GAMMA: false,
+  GAMMA: true,
   PROD: false,
 };
 
