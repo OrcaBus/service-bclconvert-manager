@@ -109,7 +109,7 @@ export function buildAllEventRules(
       }
       // Workflow Manager Draft Updates - Legacy
       // Populate Draft Data events
-      case 'wrscEventRule': {
+      case 'wrscEventRuleLegacy': {
         eventBridgeObjects.push({
           ruleName: eventBridgeRuleName,
           ruleObject: buildWorkflowRunStateChangeDraftLegacyEventRule(scope, {
@@ -120,7 +120,7 @@ export function buildAllEventRules(
         break;
       }
       // Workflow Manager Draft Updates - New
-      case 'wrscEventRuleLegacy': {
+      case 'wrscEventRule': {
         eventBridgeObjects.push({
           ruleName: eventBridgeRuleName,
           ruleObject: buildWorkflowRunStateChangeDraftEventRule(scope, {

@@ -1,6 +1,10 @@
 import { LambdaInput, lambdaNameList, LambdaObject, lambdaRequirementsMap } from './interfaces';
 import { PythonUvFunction } from '@orcabus/platform-cdk-constructs/lambda';
-import { LAMBDA_DIR, SSM_PARAMETER_PATH_WORKFLOW_VERSION } from '../constants';
+import {
+  LAMBDA_DIR,
+  SSM_PARAMETER_PATH_PREFIX,
+  SSM_PARAMETER_PATH_WORKFLOW_VERSION,
+} from '../constants';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
@@ -26,6 +30,7 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
     timeout: Duration.seconds(60),
     memorySize: 2048,
     includeOrcabusApiToolsLayer: lambdaRequirements.needsOrcabusApiTools,
+    includeIcav2Layer: lambdaRequirements.needsIcav2Tools,
   });
 
   // AwsSolutions-L1 - We'll migrate to PYTHON_3_13 ASAP, soz
@@ -53,7 +58,7 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
       new iam.PolicyStatement({
         actions: ['ssm:GetParameter'],
         resources: [
-          `arn:aws:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter${path.join(SSM_SCHEMA_ROOT, '/*')}`,
+          `arn:aws:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter${path.join(SSM_PARAMETER_PATH_PREFIX, '/*')}`,
         ],
       })
     );
@@ -106,7 +111,7 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
    */
   if (props.lambdaName === 'createNewWorkflowRunObject') {
     lambdaFunction.addEnvironment(
-      'SSM_DEFAULT_WORKFLOW_VERSION_PARAMETER_NAME',
+      'DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME',
       path.join(SSM_PARAMETER_PATH_WORKFLOW_VERSION)
     );
   }

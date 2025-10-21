@@ -1,15 +1,22 @@
 {
   "Comment": "A description of my state machine",
-  "StartAt": "Set vars",
+  "StartAt": "Set input",
   "States": {
+    "Set input": {
+      "Type": "Pass",
+      "Next": "Set vars",
+      "Output": "{% $states.input.input[0].payload %}",
+      "Assign": {
+        "projectId": "{% $states.input.input[0].projectId %}"
+      }
+    },
     "Set vars": {
       "Type": "Pass",
       "Next": "Get valid pipeline ids",
       "Assign": {
         "status": "{% $states.input.status %}",
-        "projectId": "{% $states.input.projectId %}",
-        "pipelineId": "{% $states.input.payload.pipeline.id %}",
-        "analysisId": "{% $states.input.payload.id %}"
+        "pipelineId": "{% $states.input.pipeline.id %}",
+        "analysisId": "{% $states.input.id %}"
       }
     },
     "Get valid pipeline ids": {
@@ -55,6 +62,7 @@
       "Arguments": {
         "FunctionName": "${__find_workflow_lambda_function_arn__}",
         "Payload": {
+          "projectId": "{% $projectId %}",
           "analysisId": "{% $analysisId %}"
         }
       },
@@ -118,7 +126,7 @@
       "Next": "New WRM is deployed",
       "Output": {},
       "Assign": {
-        "workflowRunUpdate": "{% $states.result.Payload.workflowRunUpdate %}"
+        "workflowRunObject": "{% $states.result.Payload.workflowRunObject %}"
       }
     },
     "New WRM is deployed": {
@@ -139,7 +147,7 @@
         "Entries": [
           {
             "Detail": "{% $merge([\n  $workflowRunObject,\n  {\n    \"timestamp\": $now()  }\n]) %}",
-            "DetailType": "${__workflow_run_update_detail_type__}",
+            "DetailType": "${__workflow_run_update_event_detail_type__}",
             "EventBusName": "${__event_bus_name__}",
             "Source": "${__stack_source__}"
           }
@@ -190,7 +198,7 @@
       ],
       "Next": "New WRM is deployed",
       "Assign": {
-        "workflowRunUpdate": "{% $states.result.Payload.workflowRunUpdate %}"
+        "workflowRunObject": "{% $states.result.Payload.workflowRunObject %}"
       }
     }
   },

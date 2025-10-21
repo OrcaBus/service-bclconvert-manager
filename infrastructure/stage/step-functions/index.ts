@@ -21,7 +21,7 @@ import {
   STEP_FUNCTIONS_DIR,
   SUCCEEDED_STATUS,
   WORKFLOW_RUN_STATE_CHANGE_DETAIL_TYPE,
-  WORKFLOW_RUN_UPDATE_DETAIL_TYPE,
+  WORKFLOW_RUN_UPDATE_EVENT_DETAIL_TYPE,
 } from '../constants';
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -60,7 +60,7 @@ function createStateMachineDefinitionSubstitutions(props: BuildStepFunctionProps
     definitionSubstitutions['__workflow_run_state_change_event_detail_type__'] =
       WORKFLOW_RUN_STATE_CHANGE_DETAIL_TYPE;
     definitionSubstitutions['__workflow_run_update_event_detail_type__'] =
-      WORKFLOW_RUN_UPDATE_DETAIL_TYPE;
+      WORKFLOW_RUN_UPDATE_EVENT_DETAIL_TYPE;
     definitionSubstitutions['__stack_source__'] = EVENT_SOURCE;
     definitionSubstitutions['__ready_event_status__'] = READY_STATUS;
     definitionSubstitutions['__draft_event_status__'] = DRAFT_STATUS;

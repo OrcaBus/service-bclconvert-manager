@@ -53,11 +53,17 @@ from libica.openapi.v3 import AnalysisInput
 from wrapica.project_analysis import (
     get_project_analysis_inputs,
 )
-from wrapica.project_data import convert_project_data_obj_to_uri, get_project_data_obj_by_id
+from wrapica.project_data import (
+    convert_project_data_obj_to_uri,
+    get_project_data_obj_by_id
+)
 
 # Layer imports
 from orcabus_api_tools.utils.aws_helpers import get_ssm_value
-from orcabus_api_tools.sequence import get_sequence_request, get_library_id_list_from_instrument_run_id
+from orcabus_api_tools.sequence import (
+    get_sequence_request,
+    get_library_id_list_from_instrument_run_id
+)
 from orcabus_api_tools.sequence.globals import SEQUENCE_RUN_ENDPOINT
 from orcabus_api_tools.workflow import list_workflows
 from orcabus_api_tools.metadata import get_libraries_list_from_library_id_list
@@ -253,10 +259,18 @@ def handler(event, context):
         tags['instrumentRunId'] = sequence_run_object.get('instrumentRunId')
         tags['basespaceRunId'] = sequence_run_object.get('v1pre3Id')
         tags['experimentRunName'] = sequence_run_object.get('experimentName')
-
-        # Update the project id
-        engine_parameters['projectId'] = project_id
-
+        # Update libraries, assuming that the SRM has ingested these into the samplesheet
+        workflow_run_object['libraries'] = list(map(
+            lambda library_obj_: {
+                "libraryId": library_obj_['libraryId'],
+                "orcabusId": library_obj_['orcabusId'],
+            },
+            get_libraries_list_from_library_id_list(
+                get_library_id_list_from_instrument_run_id(
+                    instrument_run_id=tags.get('instrumentRunId')
+                )
+            )
+        ))
     # ICA Mode
     else:
         set_icav2_env_vars()
@@ -285,18 +299,6 @@ def handler(event, context):
         engine_parameters['pipelineId'] = pipeline_id
         engine_parameters['analysisId'] = analysis_id
 
-        # Update libraries, assuming that the SRM has ingested these into the samplesheet
-        workflow_run_object['libraries'] = list(map(
-            lambda library_obj_: {
-                "libraryId": library_obj_['libraryId'],
-                "orcabusId": library_obj_['orcaBusId'],
-            },
-            get_libraries_list_from_library_id_list(
-                get_library_id_list_from_instrument_run_id(
-                    instrument_run_id=tags.get('instrumentRunId')
-                )
-            )
-        ))
 
     # Update the latest data
     latest_data['inputs'] = inputs

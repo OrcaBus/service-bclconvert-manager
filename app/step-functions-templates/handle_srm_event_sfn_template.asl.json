@@ -16,7 +16,7 @@
       "Arguments": {
         "FunctionName": "${__get_sequence_run_object_lambda_function_arn__}",
         "Payload": {
-          "orcabusId": "{% $seqOrcabusId %}"
+          "seqOrcabusId": "{% $seqOrcabusId %}"
         }
       },
       "Retry": [
@@ -104,7 +104,10 @@
         }
       ],
       "Next": "New WRM Is Deployed",
-      "Output": {}
+      "Output": {},
+      "Assign": {
+        "workflowRunObject": "{% $states.result.Payload.workflowRunObject ? $states.result.Payload.workflowRunObject : null %}"
+      }
     },
     "Create new BCLConvert Workflow Object": {
       "Type": "Task",
@@ -130,7 +133,10 @@
         }
       ],
       "Next": "New WRM Is Deployed",
-      "Output": {}
+      "Output": {},
+      "Assign": {
+        "workflowRunObject": "{% $states.result.Payload.workflowRunObject ? $states.result.Payload.workflowRunObject : null %}"
+      }
     },
     "New WRM Is Deployed": {
       "Type": "Choice",
@@ -150,7 +156,7 @@
         "Entries": [
           {
             "Detail": "{% $merge([\n  $workflowRunObject,\n  {\n    \"timestamp\": $now()  }\n]) %}",
-            "DetailType": "${__workflow_run_update_detail_type__}",
+            "DetailType": "${__workflow_run_update_event_detail_type__}",
             "EventBusName": "${__event_bus_name__}",
             "Source": "${__stack_source__}"
           }
