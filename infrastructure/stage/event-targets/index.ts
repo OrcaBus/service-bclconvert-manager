@@ -38,17 +38,6 @@ export function buildWrscToSfnTarget(props: AddSfnAsEventBridgeTargetProps) {
   );
 }
 
-export function buildIcaEventStateChangeToHandleIcaEventSfnTarget(
-  props: AddSfnAsEventBridgeTargetProps
-) {
-  // We take in the event detail from the icav2 wes state change event
-  props.eventBridgeRuleObj.addTarget(
-    new eventsTargets.SfnStateMachine(props.stateMachineObj, {
-      input: events.RuleTargetInput.fromEventPath('$.detail.ica-event'),
-    })
-  );
-}
-
 export function buildSrmEventStateChangeToHandleSrmEventSfnTarget(
   props: AddSfnAsEventBridgeTargetProps
 ) {

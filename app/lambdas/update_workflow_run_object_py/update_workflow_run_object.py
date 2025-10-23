@@ -205,28 +205,10 @@ def handler(event, context):
         tags['basespaceRunId'] = sequence_run_object.get('v1pre3Id')
         tags['experimentRunName'] = sequence_run_object.get('experimentName')
 
-        # Update the project id
-        engine_parameters['projectId'] = project_id
-
     # ICA Mode
     else:
         # Set ICAv2 env vars (this takes a second which is why we don't do it unless we need to)
         set_icav2_env_vars()
-
-        # Also update the libraries, assuming that the SRM has done its job
-        # Update libraries, assuming that the SRM has ingested these into the samplesheet
-        if not workflow_run_object.get('libraries'):
-            workflow_run_object['libraries'] = list(map(
-                lambda library_obj_: {
-                    "libraryId": library_obj_['libraryId'],
-                    "orcabusId": library_obj_['orcaBusId'],
-                },
-                get_libraries_list_from_library_id_list(
-                    get_library_id_list_from_instrument_run_id(
-                        instrument_run_id=tags.get('instrumentRunId')
-                    )
-                )
-            ))
 
         # ICA Inputs
         ica_inputs = get_project_analysis_inputs(
@@ -277,6 +259,20 @@ def handler(event, context):
                 )
             )
 
+    # Also update the libraries, assuming that the SRM has done its job
+    # Update libraries, assuming that the SRM has ingested these into the samplesheet
+    workflow_run_object['libraries'] = list(map(
+        lambda library_obj_: {
+            "libraryId": library_obj_['libraryId'],
+            "orcabusId": library_obj_['orcabusId'],
+        },
+        get_libraries_list_from_library_id_list(
+            get_library_id_list_from_instrument_run_id(
+                instrument_run_id=tags.get('instrumentRunId')
+            )
+        )
+    ))
+
     # Update the latest data
     latest_data['inputs'] = inputs
     latest_data['tags'] = tags
@@ -289,6 +285,10 @@ def handler(event, context):
     # And drop the currentState attribute
     _ = workflow_run_object.pop('currentState', None)
     workflow_run_object['payload'] = latest_payload
+
+    # If the status is DRAFT, we cannot update it to anything else
+    if get_workflow_run_from_portal_run_id(portal_run_id)['currentState']['status'] == 'DRAFT':
+        workflow_run_object['status'] = 'DRAFT'
 
     # Return the object
     return {

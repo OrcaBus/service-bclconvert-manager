@@ -89,7 +89,7 @@ function createEventPipe(scope: Construct, props: IcaEventPipeConstructProps) {
 
   new pipes.Pipe(scope, 'IcaEventPipeAlpha', {
     pipeName: props.icaEventPipeName,
-    source: new SqsSource(props.icaSqsQueue),
+    source: new SqsSource(props.icaSqsQueue, { batchSize: 1 }),
     target: new SfnTarget(stepFunctionObject, {
       inputTransformation: targetInputTransformation,
     }),
