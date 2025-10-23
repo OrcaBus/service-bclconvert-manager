@@ -52,6 +52,7 @@ from datetime import datetime, timezone
 from libica.openapi.v3 import AnalysisInput
 from wrapica.project_analysis import (
     get_project_analysis_inputs,
+    get_analysis_obj_from_analysis_id,
 )
 from wrapica.project_data import (
     convert_project_data_obj_to_uri,
@@ -259,18 +260,7 @@ def handler(event, context):
         tags['instrumentRunId'] = sequence_run_object.get('instrumentRunId')
         tags['basespaceRunId'] = sequence_run_object.get('v1pre3Id')
         tags['experimentRunName'] = sequence_run_object.get('experimentName')
-        # Update libraries, assuming that the SRM has ingested these into the samplesheet
-        workflow_run_object['libraries'] = list(map(
-            lambda library_obj_: {
-                "libraryId": library_obj_['libraryId'],
-                "orcabusId": library_obj_['orcabusId'],
-            },
-            get_libraries_list_from_library_id_list(
-                get_library_id_list_from_instrument_run_id(
-                    instrument_run_id=tags.get('instrumentRunId')
-                )
-            )
-        ))
+
     # ICA Mode
     else:
         set_icav2_env_vars()
@@ -299,6 +289,44 @@ def handler(event, context):
         engine_parameters['pipelineId'] = pipeline_id
         engine_parameters['analysisId'] = analysis_id
 
+        # Check if tags are none and set if so
+        if not tags:
+            # Get the basespace run id from the analysis id
+            # Workflow session tags look like this
+            # {
+            #   "technicalTags": [
+            #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/",
+            #     "e4320dcb-2f23-4d08-bf0c-1a957709036b",
+            #     "ctTSO-Tsqn-NebR241021_24Oct24",
+            #     "241024_A00130_0336_BHW7MVDSXC"
+            #   ],
+            #   "userTags": [
+            #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/"
+            #   ]
+            # }
+            analysis_obj = get_analysis_obj_from_analysis_id(
+                project_id=project_id,
+                analysis_id=analysis_id
+            )
+            tags = {
+                "instrumentRunId": analysis_obj.workflow_session.tags.technical_tags[-1],
+                "basespaceRunId": int(Path(analysis_obj.workflow_session.tags.user_tags[0]).name.rsplit("_", 1)[-1]),
+                "experimentRunName": analysis_obj.workflow_session.tags.technical_tags[-2],
+            }
+
+    if not workflow_run_object.get("libraries"):
+        # Update libraries, assuming that the SRM has ingested these into the samplesheet
+        workflow_run_object['libraries'] = list(map(
+            lambda library_obj_: {
+                "libraryId": library_obj_['libraryId'],
+                "orcabusId": library_obj_['orcabusId'],
+            },
+            get_libraries_list_from_library_id_list(
+                get_library_id_list_from_instrument_run_id(
+                    instrument_run_id=tags.get('instrumentRunId')
+                )
+            )
+        ))
 
     # Update the latest data
     latest_data['inputs'] = inputs
@@ -310,6 +338,8 @@ def handler(event, context):
 
     # Update the workflow run object
     workflow_run_object['payload'] = latest_payload
+
+
 
     return {
         "workflowRunObject": workflow_run_object

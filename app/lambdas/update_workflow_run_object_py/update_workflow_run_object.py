@@ -261,17 +261,18 @@ def handler(event, context):
 
     # Also update the libraries, assuming that the SRM has done its job
     # Update libraries, assuming that the SRM has ingested these into the samplesheet
-    workflow_run_object['libraries'] = list(map(
-        lambda library_obj_: {
-            "libraryId": library_obj_['libraryId'],
-            "orcabusId": library_obj_['orcabusId'],
-        },
-        get_libraries_list_from_library_id_list(
-            get_library_id_list_from_instrument_run_id(
-                instrument_run_id=tags.get('instrumentRunId')
+    if not workflow_run_object.get("libraries"):
+        workflow_run_object['libraries'] = list(map(
+            lambda library_obj_: {
+                "libraryId": library_obj_['libraryId'],
+                "orcabusId": library_obj_['orcabusId'],
+            },
+            get_libraries_list_from_library_id_list(
+                get_library_id_list_from_instrument_run_id(
+                    instrument_run_id=tags.get('instrumentRunId')
+                )
             )
-        )
-    ))
+        ))
 
     # Update the latest data
     latest_data['inputs'] = inputs
