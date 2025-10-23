@@ -7,15 +7,10 @@ import { StepFunctionObject } from '../step-functions/interfaces';
  * EventBridge Target Interfaces
  */
 export type EventBridgeTargetName =
-  // SRM
-  | 'sequenceRunStateChangeEventToHandleSrmEventSfnTarget'
   // Validate draft to ready
-  | 'draftLegacyToValidateDraftSfnTarget'
-  | 'draftToValidateDraftSfnTarget';
+  'draftLegacyToValidateDraftSfnTarget' | 'draftToValidateDraftSfnTarget';
 
 export const eventBridgeTargetsNameList: EventBridgeTargetName[] = [
-  // SRM
-  'sequenceRunStateChangeEventToHandleSrmEventSfnTarget',
   // Validate draft to ready
   'draftLegacyToValidateDraftSfnTarget',
   'draftToValidateDraftSfnTarget',

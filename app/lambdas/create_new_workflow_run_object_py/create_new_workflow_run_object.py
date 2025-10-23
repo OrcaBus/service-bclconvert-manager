@@ -52,6 +52,7 @@ from datetime import datetime, timezone
 from libica.openapi.v3 import AnalysisInput
 from wrapica.project_analysis import (
     get_project_analysis_inputs,
+    get_analysis_obj_from_analysis_id,
 )
 from wrapica.project_data import (
     convert_project_data_obj_to_uri,
@@ -61,10 +62,8 @@ from wrapica.project_data import (
 # Layer imports
 from orcabus_api_tools.utils.aws_helpers import get_ssm_value
 from orcabus_api_tools.sequence import (
-    get_sequence_request,
     get_library_id_list_from_instrument_run_id
 )
-from orcabus_api_tools.sequence.globals import SEQUENCE_RUN_ENDPOINT
 from orcabus_api_tools.workflow import list_workflows
 from orcabus_api_tools.metadata import get_libraries_list_from_library_id_list
 from icav2_tools import set_icav2_env_vars
@@ -175,10 +174,6 @@ def handler(event, context):
     :param context:
     :return:
     """
-
-    # SRM Mode
-    seq_orcabus_id = event.get('seqOrcabusId')
-
     # ICA Mode
     project_id = event.get("projectId")
     pipeline_id = event.get("pipelineId")
@@ -186,18 +181,14 @@ def handler(event, context):
 
     # Check one mode is used
     if (
-        (
-            # SRM mode
-            not seq_orcabus_id and
-            # ICA mode
-            not (
-                project_id and
-                pipeline_id and
-                analysis_id
-            )
+        # ICA mode
+        not (
+            project_id and
+            pipeline_id and
+            analysis_id
         )
     ):
-        raise ValueError("Must provide either seqOrcabusId (SRM mode) or portalRunId + projectId + pipelineId + analysisId (ICA mode)")
+        raise ValueError("Must provide either projectId + pipelineId + analysisId (ICA mode)")
 
     # Generate the portal run id
     portal_run_id = create_portal_run_id()
@@ -242,23 +233,62 @@ def handler(event, context):
     # Set the tags
     tags = latest_data.get('tags', {})
 
-    # Engine Parameters
-    engine_parameters = latest_data.get('engineParameters', {})
-
     # Inputs
     inputs = latest_data.get('inputs', {})
 
-    # SRM Mode
-    if seq_orcabus_id:
-        # Get sequencing run object
-        sequence_run_object = get_sequence_request(
-            endpoint=str(Path(SEQUENCE_RUN_ENDPOINT) / seq_orcabus_id)
+    # ICA Mode
+    set_icav2_env_vars()
+
+    # ICA Inputs
+    ica_inputs = get_project_analysis_inputs(
+        project_id=project_id,
+        analysis_id=analysis_id,
+    )
+
+    # Run folder input
+    if 'inputUri' not in inputs:
+        inputs['inputUri'] = get_run_folder_input_uri_from_ica_inputs(
+            ica_inputs,
+            project_id=project_id,
+        )
+    if 'sampleSheetUri' not in inputs:
+        inputs['sampleSheetUri'] = get_sample_sheet_uri_from_ica_inputs(
+            ica_inputs,
+            project_id=project_id,
         )
 
-        # Update tags
-        tags['instrumentRunId'] = sequence_run_object.get('instrumentRunId')
-        tags['basespaceRunId'] = sequence_run_object.get('v1pre3Id')
-        tags['experimentRunName'] = sequence_run_object.get('experimentName')
+    # Update Engine Parameters
+    engine_parameters = latest_data.get('engineParameters', {})
+    engine_parameters['projectId'] = project_id
+    engine_parameters['pipelineId'] = pipeline_id
+    engine_parameters['analysisId'] = analysis_id
+
+    # Check if tags are none and set if so
+    if not tags:
+        # Get the basespace run id from the analysis id
+        # Workflow session tags look like this
+        # {
+        #   "technicalTags": [
+        #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/",
+        #     "e4320dcb-2f23-4d08-bf0c-1a957709036b",
+        #     "ctTSO-Tsqn-NebR241021_24Oct24",
+        #     "241024_A00130_0336_BHW7MVDSXC"
+        #   ],
+        #   "userTags": [
+        #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/"
+        #   ]
+        # }
+        analysis_obj = get_analysis_obj_from_analysis_id(
+            project_id=project_id,
+            analysis_id=analysis_id
+        )
+        tags = {
+            "instrumentRunId": analysis_obj.workflow_session.tags.technical_tags[-1],
+            "basespaceRunId": int(Path(analysis_obj.workflow_session.tags.user_tags[0]).name.rsplit("_", 1)[-1]),
+            "experimentRunName": analysis_obj.workflow_session.tags.technical_tags[-2],
+        }
+
+    if not workflow_run_object.get("libraries"):
         # Update libraries, assuming that the SRM has ingested these into the samplesheet
         workflow_run_object['libraries'] = list(map(
             lambda library_obj_: {
@@ -271,34 +301,6 @@ def handler(event, context):
                 )
             )
         ))
-    # ICA Mode
-    else:
-        set_icav2_env_vars()
-
-        # ICA Inputs
-        ica_inputs = get_project_analysis_inputs(
-            project_id=project_id,
-            analysis_id=analysis_id,
-        )
-
-        # Run folder input
-        if 'inputUri' not in inputs:
-            inputs['inputUri'] = get_run_folder_input_uri_from_ica_inputs(
-                ica_inputs,
-                project_id=project_id,
-            )
-        if 'sampleSheetUri' not in inputs:
-            inputs['sampleSheetUri'] = get_sample_sheet_uri_from_ica_inputs(
-                ica_inputs,
-                project_id=project_id,
-            )
-
-        # Update Engine Parameters
-        engine_parameters = latest_data.get('engineParameters', {})
-        engine_parameters['projectId'] = project_id
-        engine_parameters['pipelineId'] = pipeline_id
-        engine_parameters['analysisId'] = analysis_id
-
 
     # Update the latest data
     latest_data['inputs'] = inputs
@@ -310,6 +312,8 @@ def handler(event, context):
 
     # Update the workflow run object
     workflow_run_object['payload'] = latest_payload
+
+
 
     return {
         "workflowRunObject": workflow_run_object

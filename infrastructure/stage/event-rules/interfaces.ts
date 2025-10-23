@@ -1,15 +1,10 @@
 import { EventPattern, IEventBus, Rule } from 'aws-cdk-lib/aws-events';
 
 export type EventBridgeRuleName =
-  // Listen to SRM
-  | 'sequenceRunStateChangeRule'
   // Handle WRSC events
-  | 'wrscEventRuleLegacy'
-  | 'wrscEventRule';
+  'wrscEventRuleLegacy' | 'wrscEventRule';
 
 export const eventBridgeRuleNameList: Array<EventBridgeRuleName> = [
-  // Listen to SRM
-  'sequenceRunStateChangeRule',
   // Handle WRSC events
   'wrscEventRuleLegacy',
   'wrscEventRule',

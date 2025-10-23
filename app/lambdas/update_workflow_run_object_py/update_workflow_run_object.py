@@ -62,8 +62,7 @@ from wrapica.project_data import convert_project_data_obj_to_uri, get_project_da
 
 # Layer imports
 from orcabus_api_tools.metadata import get_libraries_list_from_library_id_list
-from orcabus_api_tools.sequence import get_sequence_request, get_library_id_list_from_instrument_run_id
-from orcabus_api_tools.sequence.globals import SEQUENCE_RUN_ENDPOINT
+from orcabus_api_tools.sequence import get_library_id_list_from_instrument_run_id
 from orcabus_api_tools.workflow import get_workflow_run_from_portal_run_id, get_latest_payload_from_workflow_run
 from icav2_tools import set_icav2_env_vars
 
@@ -145,9 +144,6 @@ def handler(event, context):
     # Get inputs
     portal_run_id = event.get('portalRunId')
 
-    # SRM Mode
-    seq_orcabus_id = event.get('seqOrcabusId')
-
     # ICA Mode
     project_id = event.get("projectId")
     pipeline_id = event.get("pipelineId")
@@ -155,20 +151,15 @@ def handler(event, context):
 
     # Check one mode is used
     if (
-            # Required in all modes
-            not portal_run_id or
-            (
-                # SRM mode
-                not seq_orcabus_id and
-                # ICA mode
-                not (
-                    project_id and
-                    pipeline_id and
-                    analysis_id
-                )
-            )
+        # ICA mode
+        not (
+            portal_run_id and
+            project_id and
+            pipeline_id and
+            analysis_id
+        )
     ):
-        raise ValueError("Must provide either portalRunId + seqOrcabusId (SRM mode) or portalRunId + projectId + pipelineId + analysisId (ICA mode)")
+        raise ValueError("Must provide either portalRunId + projectId + pipelineId + analysisId (ICA mode)")
 
 
     # Get the workflow run object
@@ -183,9 +174,6 @@ def handler(event, context):
     # Set the tags
     tags = latest_data.get('tags', {})
 
-    # Engine Parameters
-    engine_parameters = latest_data.get('engineParameters', {})
-
     # Inputs
     inputs = latest_data.get('inputs', {})
 
@@ -193,85 +181,72 @@ def handler(event, context):
     if not latest_payload.get('version'):
         latest_payload['version'] = DEFAULT_PAYLOAD_VERSION
 
-    # SRM Mode
-    if seq_orcabus_id:
-        # Get sequencing run object
-        sequence_run_object = get_sequence_request(
-            endpoint=str(Path(SEQUENCE_RUN_ENDPOINT) / seq_orcabus_id)
+    # Set ICAv2 env vars (this takes a second which is why we don't do it unless we need to)
+    set_icav2_env_vars()
+
+    # ICA Inputs
+    ica_inputs = get_project_analysis_inputs(
+        project_id=project_id,
+        analysis_id=analysis_id,
+    )
+
+    # Run folder input
+    if 'inputUri' not in inputs:
+        inputs['inputUri'] = get_run_folder_input_uri_from_ica_inputs(
+            ica_inputs,
+            project_id=project_id,
+        )
+    if 'sampleSheetUri' not in inputs:
+        inputs['sampleSheetUri'] = get_sample_sheet_uri_from_ica_inputs(
+            ica_inputs,
+            project_id=project_id,
         )
 
-        # Update tags
-        tags['instrumentRunId'] = sequence_run_object.get('instrumentRunId')
-        tags['basespaceRunId'] = sequence_run_object.get('v1pre3Id')
-        tags['experimentRunName'] = sequence_run_object.get('experimentName')
+    # Update Engine Parameters
+    engine_parameters = latest_data.get('engineParameters', {})
+    engine_parameters['projectId'] = project_id
+    engine_parameters['pipelineId'] = pipeline_id
+    engine_parameters['analysisId'] = analysis_id
 
-    # ICA Mode
-    else:
-        # Set ICAv2 env vars (this takes a second which is why we don't do it unless we need to)
-        set_icav2_env_vars()
+    # Get the analysis status
+    status = get_analysis_obj_from_analysis_id(
+        project_id=project_id,
+        analysis_id=analysis_id,
+    ).status
 
-        # ICA Inputs
-        ica_inputs = get_project_analysis_inputs(
+    # Update the workflow run status based on the ICA analysis status
+    workflow_run_object['status'] = STATUS_MAP[status]
+
+    # If workflow status is SUCCEEDED, add outputUri
+    if status == 'SUCCEEDED':
+        # Get the workflow output object
+        analysis_output_object = get_analysis_output_object_from_analysis_output_code(
             project_id=project_id,
             analysis_id=analysis_id,
+            analysis_output_code='Output'
         )
-
-        # Run folder input
-        if 'inputUri' not in inputs:
-            inputs['inputUri'] = get_run_folder_input_uri_from_ica_inputs(
-                ica_inputs,
-                project_id=project_id,
+        # Update the engine parameter output uri
+        engine_parameters['outputUri'] = convert_project_data_obj_to_uri(
+            get_project_data_obj_by_id(
+                project_id=analysis_output_object.project_id,
+                data_id=analysis_output_object.data[0].data_id
             )
-        if 'sampleSheetUri' not in inputs:
-            inputs['sampleSheetUri'] = get_sample_sheet_uri_from_ica_inputs(
-                ica_inputs,
-                project_id=project_id,
-            )
-
-        # Update Engine Parameters
-        engine_parameters = latest_data.get('engineParameters', {})
-        engine_parameters['projectId'] = project_id
-        engine_parameters['pipelineId'] = pipeline_id
-        engine_parameters['analysisId'] = analysis_id
-
-        # Get the analysis status
-        status = get_analysis_obj_from_analysis_id(
-            project_id=project_id,
-            analysis_id=analysis_id,
-        ).status
-
-        # Update the workflow run status based on the ICA analysis status
-        workflow_run_object['status'] = STATUS_MAP[status]
-
-        # If workflow status is SUCCEEDED, add outputUri
-        if status == 'SUCCEEDED':
-            # Get the workflow output object
-            analysis_output_object = get_analysis_output_object_from_analysis_output_code(
-                project_id=project_id,
-                analysis_id=analysis_id,
-                analysis_output_code='Output'
-            )
-            # Update the engine parameter output uri
-            engine_parameters['outputUri'] = convert_project_data_obj_to_uri(
-                get_project_data_obj_by_id(
-                    project_id=analysis_output_object.project_id,
-                    data_id=analysis_output_object.data[0].data_id
-                )
-            )
+        )
 
     # Also update the libraries, assuming that the SRM has done its job
     # Update libraries, assuming that the SRM has ingested these into the samplesheet
-    workflow_run_object['libraries'] = list(map(
-        lambda library_obj_: {
-            "libraryId": library_obj_['libraryId'],
-            "orcabusId": library_obj_['orcabusId'],
-        },
-        get_libraries_list_from_library_id_list(
-            get_library_id_list_from_instrument_run_id(
-                instrument_run_id=tags.get('instrumentRunId')
+    if not workflow_run_object.get("libraries"):
+        workflow_run_object['libraries'] = list(map(
+            lambda library_obj_: {
+                "libraryId": library_obj_['libraryId'],
+                "orcabusId": library_obj_['orcabusId'],
+            },
+            get_libraries_list_from_library_id_list(
+                get_library_id_list_from_instrument_run_id(
+                    instrument_run_id=tags.get('instrumentRunId')
+                )
             )
-        )
-    ))
+        ))
 
     # Update the latest data
     latest_data['inputs'] = inputs
