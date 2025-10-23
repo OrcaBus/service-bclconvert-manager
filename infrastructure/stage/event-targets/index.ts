@@ -52,18 +52,6 @@ export function buildSrmEventStateChangeToHandleSrmEventSfnTarget(
 export function buildAllEventBridgeTargets(props: EventBridgeTargetsProps) {
   for (const eventBridgeTargetsName of eventBridgeTargetsNameList) {
     switch (eventBridgeTargetsName) {
-      // SRM State Change
-      case 'sequenceRunStateChangeEventToHandleSrmEventSfnTarget': {
-        buildSrmEventStateChangeToHandleSrmEventSfnTarget(<AddSfnAsEventBridgeTargetProps>{
-          eventBridgeRuleObj: props.eventBridgeRuleObjects.find(
-            (eventBridgeObject) => eventBridgeObject.ruleName === 'sequenceRunStateChangeRule'
-          )?.ruleObject,
-          stateMachineObj: props.stepFunctionObjects.find(
-            (sfnObject) => sfnObject.stateMachineName === 'handleSrmEvent'
-          )?.sfnObject,
-        });
-        break;
-      }
       // Validate draft data
       case 'draftLegacyToValidateDraftSfnTarget': {
         buildWrscLegacyToSfnTarget(<AddSfnAsEventBridgeTargetProps>{

@@ -10,16 +10,12 @@ import { SsmParameterPaths } from '../ssm/interfaces';
 export type StateMachineName =
   // Handle ICA Event
   | 'handleIcaEvent'
-  // Handle SRM Event
-  | 'handleSrmEvent'
   // Validate Draft Data to Ready
   | 'validateDraftToReady';
 
 export const stateMachineNameList: StateMachineName[] = [
   // Handle ICA Event
   'handleIcaEvent',
-  // Handle SRM Event
-  'handleSrmEvent',
   // Validate Draft Data to Ready
   'validateDraftToReady',
 ];
@@ -60,10 +56,6 @@ export const stepFunctionsRequirementsMap: Record<StateMachineName, StepFunction
     needsEventPutPermission: true,
     isExpressSfn: true,
   },
-  // Handle SRM Event
-  handleSrmEvent: {
-    needsEventPutPermission: true,
-  },
   // Validate Draft Data to Ready
   validateDraftToReady: {
     needsEventPutPermission: true,
@@ -76,15 +68,6 @@ export const stepFunctionToLambdasMap: Record<StateMachineName, LambdaName[]> = 
     // Shared SRM / ICA lambdas
     'createNewWorkflowRunObject',
     'findWorkflow',
-    'getSequenceRunObject',
-    'updateWorkflowRunObject',
-  ],
-  // Handle SRM Event
-  handleSrmEvent: [
-    // Shared SRM / ICA lambdas
-    'createNewWorkflowRunObject',
-    'findWorkflow',
-    'getSequenceRunObject',
     'updateWorkflowRunObject',
   ],
   // Validate Draft Data to Ready

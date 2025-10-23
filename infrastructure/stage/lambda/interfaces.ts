@@ -4,7 +4,6 @@ export type LambdaName =
   // Shared SRM / ICA lambdas
   | 'createNewWorkflowRunObject'
   | 'findWorkflow'
-  | 'getSequenceRunObject'
   | 'updateWorkflowRunObject'
   // Shared - validation lambdas
   | 'validateDraftDataCompleteSchema';
@@ -13,7 +12,6 @@ export const lambdaNameList: LambdaName[] = [
   // Shared SRM / ICA lambdas
   'createNewWorkflowRunObject',
   'findWorkflow',
-  'getSequenceRunObject',
   'updateWorkflowRunObject',
   // Shared - validation lambdas
   'validateDraftDataCompleteSchema',
@@ -38,9 +36,6 @@ export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
   findWorkflow: {
     needsOrcabusApiTools: true,
     needsIcav2Tools: true,
-  },
-  getSequenceRunObject: {
-    needsOrcabusApiTools: true,
   },
   updateWorkflowRunObject: {
     needsOrcabusApiTools: true,
