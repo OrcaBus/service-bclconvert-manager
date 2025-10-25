@@ -35,7 +35,6 @@ export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
   },
   findWorkflow: {
     needsOrcabusApiTools: true,
-    needsIcav2Tools: true,
   },
   updateWorkflowRunObject: {
     needsOrcabusApiTools: true,

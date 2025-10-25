@@ -16,23 +16,39 @@ There are two modes for input in this lambda:
 
 For both events we must query the workflow manager for all bclconvert workflows and filter to the one we want
 """
-from pathlib import Path
 
-from icav2_tools import set_icav2_env_vars
-# Imports
-# Standard
+# Standard imports
+from typing import List
 
 # Layer
 from orcabus_api_tools.workflow import (
     list_workflow_runs_by_workflow_name,
-    get_latest_payload_from_workflow_run, get_workflow_run_from_portal_run_id
+    get_latest_payload_from_workflow_run,
+    get_workflow_request_response_results
 )
-
-# Wrapica imports
-from wrapica.project_analysis import get_analysis_obj_from_analysis_id
+from orcabus_api_tools.workflow.globals import WORKFLOW_RUN_ENDPOINT
+from orcabus_api_tools.workflow.models import WorkflowRunDetail
 
 # Globals
 WORKFLOW_RUN_NAME = 'bclconvert'
+
+
+def list_workflow_runs_by_workflow_name_legacy(
+        workflow_name: str,
+) -> List[WorkflowRunDetail]:
+    """
+    Use the query name to get workflows from a workflow name
+    :param workflow_name:
+    :return:
+    """
+
+    return get_workflow_request_response_results(
+        WORKFLOW_RUN_ENDPOINT,
+        params={
+            "workflow__workflowName": workflow_name
+        }
+    )
+
 
 def handler(event, context):
     # Get inputs
@@ -50,10 +66,12 @@ def handler(event, context):
     bclconvert_workflow_list = list_workflow_runs_by_workflow_name(WORKFLOW_RUN_NAME)
 
     if len(bclconvert_workflow_list) == 0:
+        bclconvert_workflow_list = list_workflow_runs_by_workflow_name_legacy(WORKFLOW_RUN_NAME)
+
+    if len(bclconvert_workflow_list) == 0:
         return None
 
     # ICA mode
-    set_icav2_env_vars()
     try:
         workflow_run_object = next(filter(
             lambda workflow_iter_: (
