@@ -162,7 +162,7 @@
         "Entries": [
           {
             "Detail": "{% $merge([\n  $workflowRunObject,\n  {\n    \"timestamp\": $now()  }\n]) ~>\n/* Renamed libraries to linkedLibraries using the transform method */\n| $ | {\"linkedLibraries\": libraries}, [\"libraries\"] | ~>\n/* Renamed workflowName and workflowVersion using the transform method */\n| $ | {\"workflowName\": workflow.name, \"workflowVersion\": workflow.version}, [\"workflow\"] | %}",
-            "DetailType": "${__workflow_run_state_change_detail_type__}",
+            "DetailType": "${__workflow_run_state_change_event_detail_type__}",
             "EventBusName": "${__event_bus_name__}",
             "Source": "${__stack_source__}"
           }
