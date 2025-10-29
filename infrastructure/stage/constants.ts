@@ -71,7 +71,7 @@ export const SLACK_TOPIC_NAME = 'AwsChatBotTopic';
 export const NEW_WORKFLOW_MANAGER_IS_DEPLOYED: Record<StageName, boolean> = {
   BETA: true,
   GAMMA: true,
-  PROD: false,
+  PROD: true,
 };
 
 export const PIPELINE_IDS_LIST: Record<StageName, string[]> = {
