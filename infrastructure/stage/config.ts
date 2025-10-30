@@ -3,7 +3,6 @@ import { StatefulApplicationStackConfig, StatelessApplicationStackConfig } from 
 import {
   DEFAULT_PAYLOAD_VERSION,
   EVENT_BUS_NAME,
-  NEW_WORKFLOW_MANAGER_IS_DEPLOYED,
   SSM_PARAMETER_PATH_PREFIX,
   SSM_PARAMETER_PATH_PREFIX_PIPELINE_IDS_BY_WORKFLOW_VERSION,
   SSM_PARAMETER_PATH_WORKFLOW_NAME,
@@ -59,8 +58,6 @@ export const getStatelessStackProps = (stage: StageName): StatelessApplicationSt
   return {
     // Event bus object
     eventBusName: EVENT_BUS_NAME,
-    // Is new workflow manager deployed
-    isNewWorkflowManagerDeployed: NEW_WORKFLOW_MANAGER_IS_DEPLOYED[stage],
     // SSM Parameter Paths
     ssmParameterPaths: getSsmParameterPaths(),
     // Stagename

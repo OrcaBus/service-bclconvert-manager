@@ -17,18 +17,6 @@ import {
 } from '../constants';
 
 /** Event bridge rules stuff */
-
-function buildWorkflowManagerLegacyDraftEventPattern(): EventPattern {
-  return {
-    detailType: [WORKFLOW_RUN_STATE_CHANGE_DETAIL_TYPE],
-    source: [WORKFLOW_MANAGER_EVENT_SOURCE],
-    detail: {
-      workflowName: [WORKFLOW_NAME],
-      status: [DRAFT_STATUS],
-    },
-  };
-}
-
 function buildWorkflowManagerDraftEventPattern(): EventPattern {
   return {
     detailType: [WORKFLOW_RUN_STATE_CHANGE_DETAIL_TYPE],
@@ -46,17 +34,6 @@ function buildEventRule(scope: Construct, props: EventBridgeRuleProps): Rule {
   return new events.Rule(scope, props.ruleName, {
     ruleName: props.ruleName,
     eventPattern: props.eventPattern,
-    eventBus: props.eventBus,
-  });
-}
-
-function buildWorkflowRunStateChangeDraftLegacyEventRule(
-  scope: Construct,
-  props: BuildStandardRuleProps
-): Rule {
-  return buildEventRule(scope, {
-    ruleName: props.ruleName,
-    eventPattern: buildWorkflowManagerLegacyDraftEventPattern(),
     eventBus: props.eventBus,
   });
 }
@@ -79,19 +56,7 @@ export function buildAllEventRules(
   const eventBridgeObjects: EventBridgeRuleObject[] = [];
   for (const eventBridgeRuleName of eventBridgeRuleNameList) {
     switch (eventBridgeRuleName) {
-      // Workflow Manager Draft Updates - Legacy
       // Populate Draft Data events
-      case 'wrscEventRuleLegacy': {
-        eventBridgeObjects.push({
-          ruleName: eventBridgeRuleName,
-          ruleObject: buildWorkflowRunStateChangeDraftLegacyEventRule(scope, {
-            ruleName: eventBridgeRuleName,
-            eventBus: props.eventBus,
-          }),
-        });
-        break;
-      }
-      // Workflow Manager Draft Updates - New
       case 'wrscEventRule': {
         eventBridgeObjects.push({
           ruleName: eventBridgeRuleName,

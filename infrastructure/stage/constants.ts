@@ -67,13 +67,6 @@ export const ICA_AWS_ACCOUNT_NUMBER = '079623148045';
 /* Slack constants */
 export const SLACK_TOPIC_NAME = 'AwsChatBotTopic';
 
-/* Future proofing */
-export const NEW_WORKFLOW_MANAGER_IS_DEPLOYED: Record<StageName, boolean> = {
-  BETA: true,
-  GAMMA: true,
-  PROD: true,
-};
-
 export const PIPELINE_IDS_LIST: Record<StageName, string[]> = {
   BETA: ['ef5501df-51e1-444b-b484-c9b5f28ac4dc'],
   GAMMA: ['ef5501df-51e1-444b-b484-c9b5f28ac4dc'],
