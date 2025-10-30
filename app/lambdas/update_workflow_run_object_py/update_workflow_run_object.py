@@ -48,7 +48,6 @@ AND IF the workflow status is SUCCEEDED we also add in the outputUri into the en
 """
 
 # From pathlib import path
-from pathlib import Path
 from typing import List
 
 # Wrapica imports

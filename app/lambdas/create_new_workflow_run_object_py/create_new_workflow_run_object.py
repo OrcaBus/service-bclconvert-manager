@@ -44,12 +44,15 @@ If the following don't exist in the existing payload, they will be created:
 # Standard library imports
 import secrets
 from pathlib import Path
-from typing import List
+from typing import List, cast
 from os import environ
 from datetime import datetime, timezone
+from typing_extensions import TypedDict
 
 # Wrapica imports
 from libica.openapi.v3 import AnalysisInput
+
+from orcabus_api_tools.fastq import get_fastqs_in_library
 from wrapica.project_analysis import (
     get_project_analysis_inputs,
     get_analysis_obj_from_analysis_id,
@@ -60,6 +63,7 @@ from wrapica.project_data import (
 )
 
 # Layer imports
+from orcabus_api_tools.metadata.models import LibraryBase
 from orcabus_api_tools.utils.aws_helpers import get_ssm_value
 from orcabus_api_tools.sequence import (
     get_library_id_list_from_instrument_run_id
@@ -78,10 +82,19 @@ WORKFLOW_PREFIXES = [
 DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME_ENV_VAR = 'DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME'
 
 
+class ReadSet(TypedDict):
+    orcabusId: str
+    rgid: str
+
+
+class EventLibrary(LibraryBase):
+    readsets: List[ReadSet]
+
+
 def get_input_uri_from_ica_inputs(
-    ica_inputs: List[AnalysisInput],
-    project_id: str,
-    input_code: str,
+        ica_inputs: List[AnalysisInput],
+        project_id: str,
+        input_code: str,
 ) -> str:
     """
     Given the ICA inputs, return the input URI for the given input code.
@@ -117,6 +130,7 @@ def get_run_folder_input_uri_from_ica_inputs(
         input_code='run_folder'
     )
 
+
 def get_sample_sheet_uri_from_ica_inputs(
         ica_inputs: List[AnalysisInput],
         project_id: str,
@@ -139,17 +153,17 @@ def create_portal_run_id():
     :return:
     """
     return (
-        datetime.now(timezone.utc).strftime("%Y%m%d") +
-        # 4 bytes = 8 hex characters
-        secrets.token_hex(4)
+            datetime.now(timezone.utc).strftime("%Y%m%d") +
+            # 4 bytes = 8 hex characters
+            secrets.token_hex(4)
     )
 
 
 def create_workflow_name(
-    workflow_prefix: List[str],
-    workflow_name: str,
-    workflow_version: str,
-    portal_run_id: str,
+        workflow_prefix: List[str],
+        workflow_name: str,
+        workflow_version: str,
+        portal_run_id: str,
 ):
     """
     Create a workflow name given the inputs.
@@ -181,12 +195,12 @@ def handler(event, context):
 
     # Check one mode is used
     if (
-        # ICA mode
-        not (
-            project_id and
-            pipeline_id and
-            analysis_id
-        )
+            # ICA mode
+            not (
+                    project_id and
+                    pipeline_id and
+                    analysis_id
+            )
     ):
         raise ValueError("Must provide either projectId + pipelineId + analysisId (ICA mode)")
 
@@ -194,47 +208,24 @@ def handler(event, context):
     portal_run_id = create_portal_run_id()
 
     # Get the bclconvert workflow object from the workflow manager
-    try:
-        workflow_object = next(iter(
-            list_workflows(
-                workflow_name=WORKFLOW_NAME,
-                workflow_version=get_ssm_value(environ[DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME_ENV_VAR]),
-            )
-        ))
-    except StopIteration:
-        workflow_object = {
-            "name": WORKFLOW_NAME,
-            "version": get_ssm_value(environ[DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME_ENV_VAR]),
-        }
-
-    # Generate the workflow run object
-    workflow_run_object = {
-        "status": "DRAFT",
-        "workflow": workflow_object,
-        "portalRunId": portal_run_id,
-        "workflowRunName": create_workflow_name(
-            workflow_prefix=WORKFLOW_PREFIXES,
+    workflow_object = next(iter(
+        list_workflows(
             workflow_name=WORKFLOW_NAME,
             workflow_version=get_ssm_value(environ[DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME_ENV_VAR]),
-            portal_run_id=portal_run_id,
-        ),
-        "payload": {
-            "version": DEFAULT_PAYLOAD_VERSION,
-            "data": {}
-        }
+        )
+    ))
+
+    # Initialise payload
+    payload = {
+        "version": DEFAULT_PAYLOAD_VERSION,
+        "data": {}
     }
 
-    # Get the latest payload
-    latest_payload = workflow_run_object['payload']
-
     # Set the payload version if not set
-    latest_data = latest_payload.get('data', {})
-
-    # Set the tags
-    tags = latest_data.get('tags', {})
+    data = payload.get('data', {})
 
     # Inputs
-    inputs = latest_data.get('inputs', {})
+    inputs = data.get('inputs', {})
 
     # ICA Mode
     set_icav2_env_vars()
@@ -258,62 +249,86 @@ def handler(event, context):
         )
 
     # Update Engine Parameters
-    engine_parameters = latest_data.get('engineParameters', {})
+    engine_parameters = data.get('engineParameters', {})
     engine_parameters['projectId'] = project_id
     engine_parameters['pipelineId'] = pipeline_id
     engine_parameters['analysisId'] = analysis_id
 
-    # Check if tags are none and set if so
-    if not tags:
-        # Get the basespace run id from the analysis id
-        # Workflow session tags look like this
-        # {
-        #   "technicalTags": [
-        #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/",
-        #     "e4320dcb-2f23-4d08-bf0c-1a957709036b",
-        #     "ctTSO-Tsqn-NebR241021_24Oct24",
-        #     "241024_A00130_0336_BHW7MVDSXC"
-        #   ],
-        #   "userTags": [
-        #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/"
-        #   ]
-        # }
-        analysis_obj = get_analysis_obj_from_analysis_id(
-            project_id=project_id,
-            analysis_id=analysis_id
-        )
-        tags = {
-            "instrumentRunId": analysis_obj.workflow_session.tags.technical_tags[-1],
-            "basespaceRunId": int(Path(analysis_obj.workflow_session.tags.user_tags[0]).name.rsplit("_", 1)[-1]),
-            "experimentRunName": analysis_obj.workflow_session.tags.technical_tags[-2],
-        }
+    # Get the basespace run id from the analysis id
+    # Workflow session tags look like this
+    # {
+    #   "technicalTags": [
+    #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/",
+    #     "e4320dcb-2f23-4d08-bf0c-1a957709036b",
+    #     "ctTSO-Tsqn-NebR241021_24Oct24",
+    #     "241024_A00130_0336_BHW7MVDSXC"
+    #   ],
+    #   "userTags": [
+    #     "/ilmn-runs/bssh_aps2-sh-prod_6051045/"
+    #   ]
+    # }
+    analysis_obj = get_analysis_obj_from_analysis_id(
+        project_id=project_id,
+        analysis_id=analysis_id
+    )
+    tags = {
+        "instrumentRunId": analysis_obj.workflow_session.tags.technical_tags[-1],
+        "basespaceRunId": int(Path(analysis_obj.workflow_session.tags.user_tags[0]).name.rsplit("_", 1)[-1]),
+        "experimentRunName": analysis_obj.workflow_session.tags.technical_tags[-2],
+    }
 
-    if not workflow_run_object.get("libraries"):
-        # Update libraries, assuming that the SRM has ingested these into the samplesheet
-        workflow_run_object['libraries'] = list(map(
+    # Update the latest data
+    data['inputs'] = inputs
+    data['tags'] = tags
+    data['engineParameters'] = engine_parameters
+
+    # Update the payload
+    payload['data'] = data
+
+    # Update libraries, assuming that the SRM has ingested these into the samplesheet
+    # Generate the workflow run object
+    workflow_run_object = {
+        "status": "DRAFT",
+        "workflow": workflow_object,
+        "portalRunId": portal_run_id,
+        "workflowRunName": create_workflow_name(
+            workflow_prefix=WORKFLOW_PREFIXES,
+            workflow_name=WORKFLOW_NAME,
+            workflow_version=get_ssm_value(
+                environ[DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME_ENV_VAR]),
+            portal_run_id=portal_run_id,
+        ),
+        "libraries": list(map(
             lambda library_obj_: {
                 "libraryId": library_obj_['libraryId'],
                 "orcabusId": library_obj_['orcabusId'],
+                "readsets": list(map(
+                    lambda fastq_id_iter_: cast(
+                        ReadSet,
+                        cast(object, {
+                            "orcabusId": fastq_id_iter_['id'],
+                            "rgid": ".".join([
+                                fastq_id_iter_['index'],
+                                str(fastq_id_iter_['lane']),
+                                fastq_id_iter_['instrumentRunId']
+                            ]),
+                        })
+                    ),
+                    get_fastqs_in_library(
+                        library_id=library_obj_['libraryId']
+                    )
+                )),
             },
             get_libraries_list_from_library_id_list(
                 get_library_id_list_from_instrument_run_id(
                     instrument_run_id=tags.get('instrumentRunId')
                 )
             )
-        ))
-
-    # Update the latest data
-    latest_data['inputs'] = inputs
-    latest_data['tags'] = tags
-    latest_data['engineParameters'] = engine_parameters
-
-    # Update the payload
-    latest_payload['data'] = latest_data
+        )),
+        "payload": payload,
+    }
 
     # Update the workflow run object
-    workflow_run_object['payload'] = latest_payload
-
-
 
     return {
         "workflowRunObject": workflow_run_object
