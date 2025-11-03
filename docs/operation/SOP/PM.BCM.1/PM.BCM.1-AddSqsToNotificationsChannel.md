@@ -6,7 +6,7 @@
 ## Overview
 
 This document outlines the steps to add an Amazon SQS (Simple Queue Service) queue to an ICAv2 Project.
-The SQS target may be a executor such as a lambda or step function, or a relayer such as an Event Bus.
+The SQS target may be an executor such as a lambda or step function, or a relayer such as an Event Bus.
 
 In the case of the BCLConvert Manager, we directly forward the SQS target to the Step Function for handling.
 
