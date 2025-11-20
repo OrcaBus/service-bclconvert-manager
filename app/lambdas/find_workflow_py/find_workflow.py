@@ -33,23 +33,6 @@ from orcabus_api_tools.workflow.models import WorkflowRunDetail
 WORKFLOW_RUN_NAME = 'bclconvert'
 
 
-def list_workflow_runs_by_workflow_name_legacy(
-        workflow_name: str,
-) -> List[WorkflowRunDetail]:
-    """
-    Use the query name to get workflows from a workflow name
-    :param workflow_name:
-    :return:
-    """
-
-    return get_workflow_request_response_results(
-        WORKFLOW_RUN_ENDPOINT,
-        params={
-            "workflow__workflowName": workflow_name
-        }
-    )
-
-
 def handler(event, context):
     # Get inputs
     # ICA Mode
@@ -64,9 +47,6 @@ def handler(event, context):
 
     # Get bclconvert workflow objects
     bclconvert_workflow_list = list_workflow_runs_by_workflow_name(WORKFLOW_RUN_NAME)
-
-    if len(bclconvert_workflow_list) == 0:
-        bclconvert_workflow_list = list_workflow_runs_by_workflow_name_legacy(WORKFLOW_RUN_NAME)
 
     if len(bclconvert_workflow_list) == 0:
         return None

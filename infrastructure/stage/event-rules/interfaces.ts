@@ -2,11 +2,10 @@ import { EventPattern, IEventBus, Rule } from 'aws-cdk-lib/aws-events';
 
 export type EventBridgeRuleName =
   // Handle WRSC events
-  'wrscEventRuleLegacy' | 'wrscEventRule';
+  'wrscEventRule';
 
 export const eventBridgeRuleNameList: Array<EventBridgeRuleName> = [
   // Handle WRSC events
-  'wrscEventRuleLegacy',
   'wrscEventRule',
 ];
 

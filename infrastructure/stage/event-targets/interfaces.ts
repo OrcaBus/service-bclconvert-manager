@@ -8,11 +8,10 @@ import { StepFunctionObject } from '../step-functions/interfaces';
  */
 export type EventBridgeTargetName =
   // Validate draft to ready
-  'draftLegacyToValidateDraftSfnTarget' | 'draftToValidateDraftSfnTarget';
+  'draftToValidateDraftSfnTarget';
 
 export const eventBridgeTargetsNameList: EventBridgeTargetName[] = [
   // Validate draft to ready
-  'draftLegacyToValidateDraftSfnTarget',
   'draftToValidateDraftSfnTarget',
 ];
 
