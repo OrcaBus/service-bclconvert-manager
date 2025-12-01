@@ -1,10 +1,14 @@
 import { EventPattern, IEventBus, Rule } from 'aws-cdk-lib/aws-events';
 
 export type EventBridgeRuleName =
+  // Handle SRM SampleSheet Update events
+  | 'srmSampleSheetUpdateEventRule'
   // Handle WRSC events
-  'wrscEventRule';
+  | 'wrscEventRule';
 
 export const eventBridgeRuleNameList: Array<EventBridgeRuleName> = [
+  // Handle SRM SampleSheet Update events
+  'srmSampleSheetUpdateEventRule',
   // Handle WRSC events
   'wrscEventRule',
 ];

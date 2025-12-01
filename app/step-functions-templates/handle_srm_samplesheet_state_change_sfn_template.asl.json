@@ -1,0 +1,104 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Save vars",
+  "States": {
+    "Save vars": {
+      "Type": "Pass",
+      "Next": "Give SRM a minute to also ingest the sampleshhet",
+      "Assign": {
+        "instrumentRunId": "{% $states.input.instrumentRunId %}"
+      }
+    },
+    "Give SRM a minute to also ingest the sampleshhet": {
+      "Type": "Wait",
+      "Seconds": 60,
+      "Next": "Check for existing BCLConvert Workflows"
+    },
+    "Check for existing BCLConvert Workflows": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${__find_workflows_by_instrument_run_id_lambda_function_arn___}",
+        "Payload": {
+          "instrumentRunId": "{% $instrumentRunId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "Found existing bclconvert workflow",
+      "Output": {
+        "workflowRunsList": "{% $states.result.Payload.workflowRunsList %}"
+      }
+    },
+    "Found existing bclconvert workflow": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Pass",
+          "Condition": "{% $count($states.input.workflowRunsList) > 0 %}"
+        }
+      ],
+      "Default": "Create BCLConvert Workflow Event Detail"
+    },
+    "Pass": {
+      "Type": "Pass",
+      "End": true
+    },
+    "Create BCLConvert Workflow Event Detail": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${__create_bclconvert_workflow_draft_event_detail_lambda_function_arn___}",
+        "Payload": {
+          "instrumentRunId": "{% $instrumentRunId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "Create BCLConvert Workflow Draft Event",
+      "Output": {
+        "eventDetail": "{% $states.result.Payload.eventDetail %}"
+      }
+    },
+    "Create BCLConvert Workflow Draft Event": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "Detail": "{% $states.input.eventDetail %}",
+            "DetailType": "${__workflow_run_update_detail_type__}",
+            "EventBusName": "${__event_bus_name__}",
+            "Source": "${__stack_source__}"
+          }
+        ]
+      },
+      "End": true
+    }
+  },
+  "QueryLanguage": "JSONata"
+}

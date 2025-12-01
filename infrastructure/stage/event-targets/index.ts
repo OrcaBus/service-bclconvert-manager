@@ -19,6 +19,18 @@ export function buildWrscToSfnTarget(props: AddSfnAsEventBridgeTargetProps) {
 export function buildAllEventBridgeTargets(props: EventBridgeTargetsProps) {
   for (const eventBridgeTargetsName of eventBridgeTargetsNameList) {
     switch (eventBridgeTargetsName) {
+      // Handle SRM Samplesheet event
+      case 'srmSamplesheetEventToHandleSfnTarget': {
+        buildWrscToSfnTarget(<AddSfnAsEventBridgeTargetProps>{
+          eventBridgeRuleObj: props.eventBridgeRuleObjects.find(
+            (eventBridgeObject) => eventBridgeObject.ruleName === 'srmSampleSheetUpdateEventRule'
+          )?.ruleObject,
+          stateMachineObj: props.stepFunctionObjects.find(
+            (sfnObject) => sfnObject.stateMachineName === 'handleSrmSamplesheetStateChange'
+          )?.sfnObject,
+        });
+        break;
+      }
       // Validate draft data
       case 'draftToValidateDraftSfnTarget': {
         buildWrscToSfnTarget(<AddSfnAsEventBridgeTargetProps>{

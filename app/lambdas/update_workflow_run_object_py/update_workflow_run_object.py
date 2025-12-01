@@ -47,24 +47,30 @@ If the following don't exist in the existing payload, they will be created:
 AND IF the workflow status is SUCCEEDED we also add in the outputUri into the engine parameters.
 """
 
-# From pathlib import path
-from pathlib import Path
-from typing import List
-
 # Wrapica imports
-from libica.openapi.v3 import AnalysisInput
 from wrapica.project_analysis import (
     get_project_analysis_inputs,
     get_analysis_obj_from_analysis_id,
     get_analysis_output_object_from_analysis_output_code
 )
-from wrapica.project_data import convert_project_data_obj_to_uri, get_project_data_obj_by_id
+from wrapica.project_data import (
+    convert_project_data_obj_to_uri,
+    get_project_data_obj_by_id
+)
 
 # Layer imports
 from orcabus_api_tools.metadata import get_libraries_list_from_library_id_list
 from orcabus_api_tools.sequence import get_library_id_list_from_instrument_run_id
 from orcabus_api_tools.workflow import get_workflow_run_from_portal_run_id, get_latest_payload_from_workflow_run
 from icav2_tools import set_icav2_env_vars
+
+from bssh_tool_kit import (
+    get_instrument_run_id_from_run_info_xml,
+    get_experiment_name_from_instrument_run_id,
+    get_basespace_run_id_from_instrument_run_id,
+    get_run_folder_input_uri_from_ica_inputs,
+    get_sample_sheet_uri_from_ica_inputs
+)
 
 # Globals
 DEFAULT_PAYLOAD_VERSION = "2025.10.10"
@@ -76,62 +82,6 @@ STATUS_MAP = {
     "FAILED": "FAILED",
     "ABORTED": "ABORTED"
 }
-
-
-def get_input_uri_from_ica_inputs(
-    ica_inputs: List[AnalysisInput],
-    project_id: str,
-    input_code: str,
-) -> str:
-    """
-    Given the ICA inputs, return the input URI for the given input code.
-    :param ica_inputs:
-    :param input_code:
-    :return:
-    """
-    analysis_input_object: AnalysisInput = next(filter(
-        lambda input_item_iter_: input_item_iter_.code == input_code,
-        ica_inputs
-    ))
-
-    return convert_project_data_obj_to_uri(
-        get_project_data_obj_by_id(
-            project_id=project_id,
-            data_id=analysis_input_object.analysis_data[0].data_id
-        )
-    )
-
-
-def get_run_folder_input_uri_from_ica_inputs(
-        ica_inputs: List[AnalysisInput],
-        project_id: str,
-) -> str:
-    """
-    Given the ICA inputs, return the run folder input URI.
-    :param ica_inputs:
-    :return:
-    """
-    return get_input_uri_from_ica_inputs(
-        ica_inputs=ica_inputs,
-        project_id=project_id,
-        input_code='run_folder'
-    )
-
-def get_sample_sheet_uri_from_ica_inputs(
-        ica_inputs: List[AnalysisInput],
-        project_id: str,
-):
-    """
-    Given the ICA inputs, return the sample sheet input URI.
-    :param ica_inputs:
-    :return:
-    """
-    return get_input_uri_from_ica_inputs(
-        ica_inputs=ica_inputs,
-        project_id=project_id,
-        input_code='sample_sheet'
-    )
-
 
 def handler(event, context):
     """
@@ -168,14 +118,29 @@ def handler(event, context):
     # Get the latest payload
     latest_payload = get_latest_payload_from_workflow_run(workflow_run_object['orcabusId'])
 
+    # Check if the payload data exists
+    if latest_payload is None:
+        latest_payload = {}
+
     # Set the payload version if not set
     latest_data = latest_payload.get('data', {})
 
-    # Set the tags
-    tags = latest_data.get('tags', {})
-
     # Inputs
     inputs = latest_data.get('inputs', {})
+
+    # Create tags
+    # Need to make sure we have an input uri to get information first though.
+    tags = latest_data.get('tags', {})
+    if inputs.get("inputUri") is not None:
+        # Create tags
+        instrument_run_id = get_instrument_run_id_from_run_info_xml(
+            run_info_xml_uri=(inputs['inputUri'] + 'RunInfo.xml')
+        )
+        tags.update({
+            "instrumentRunId": instrument_run_id,
+            "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
+            "basespaceRunId": get_basespace_run_id_from_instrument_run_id(instrument_run_id),
+        })
 
     # Also set the payload version if not set
     if not latest_payload.get('version'):

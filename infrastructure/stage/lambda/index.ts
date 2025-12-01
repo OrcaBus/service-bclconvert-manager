@@ -1,7 +1,14 @@
-import { LambdaInput, lambdaNameList, LambdaObject, lambdaRequirementsMap } from './interfaces';
-import { PythonUvFunction } from '@orcabus/platform-cdk-constructs/lambda';
+import {
+  LambdaInput,
+  LambdaInputs,
+  lambdaNameList,
+  LambdaObject,
+  lambdaRequirementsMap,
+} from './interfaces';
+import { getPythonUvDockerImage, PythonUvFunction } from '@orcabus/platform-cdk-constructs/lambda';
 import {
   LAMBDA_DIR,
+  LAYERS_DIR,
   SSM_PARAMETER_PATH_PREFIX,
   SSM_PARAMETER_PATH_WORKFLOW_VERSION,
 } from '../constants';
@@ -15,6 +22,33 @@ import { Construct } from 'constructs';
 import { camelCaseToKebabCase, camelCaseToSnakeCase } from '../utils';
 import * as path from 'path';
 import { SchemaNames } from '../event-schemas/interfaces';
+import { PythonLayerVersion } from '@aws-cdk/aws-lambda-python-alpha';
+
+export function buildBsshToolsLayer(scope: Construct): PythonLayerVersion {
+  /**
+        Build the bssh tools layer, used by the get manifest lambda function
+    */
+  return new PythonLayerVersion(scope, 'bssh-lambda-layer', {
+    entry: path.join(LAYERS_DIR, 'bssh_tool_kit'),
+    compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
+    compatibleArchitectures: [lambda.Architecture.ARM_64],
+    bundling: {
+      image: getPythonUvDockerImage(),
+      commandHooks: {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        beforeBundling(inputDir: string, outputDir: string): string[] {
+          return [];
+        },
+        afterBundling(inputDir: string, outputDir: string): string[] {
+          return [
+            `pip install ${inputDir} --target ${outputDir}`,
+            `find ${outputDir} -name 'pandas' -exec rm -rf {}/tests/ \\;`,
+          ];
+        },
+      },
+    },
+  });
+}
 
 function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
   const lambdaNameToSnakeCase = camelCaseToSnakeCase(props.lambdaName);
@@ -105,6 +139,24 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
     );
   }
 
+  if (lambdaRequirements.needsBsshToolsLayer) {
+    /* Give the lambda function access to BaseSpace */
+    /* Set the environment variables as required */
+    props.basespaceUrlParameterObject.grantRead(lambdaFunction.currentVersion);
+    lambdaFunction.addEnvironment(
+      'BASESPACE_URL_SSM_PARAMETER_NAME',
+      props.basespaceUrlParameterObject.parameterName
+    );
+    props.basespaceAccessTokenSecretObject.grantRead(lambdaFunction.currentVersion);
+    lambdaFunction.addEnvironment(
+      'BASESPACE_ACCESS_TOKEN_SECRET_ID',
+      props.basespaceAccessTokenSecretObject.secretName
+    );
+
+    /* Add the bssh tools layer */
+    lambdaFunction.addLayers(props.bsshToolsLayer);
+  }
+
   /*
     Special if the lambdaName is createNewWorkflowRunObject, we need to add in the ssm parameters
     DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME as the workflow version is stored in SSM
@@ -136,13 +188,14 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
   };
 }
 
-export function buildAllLambdas(scope: Construct): LambdaObject[] {
+export function buildAllLambdas(scope: Construct, props: LambdaInputs): LambdaObject[] {
   // Iterate over lambdaLayerToMapping and create the lambda functions
   const lambdaObjects: LambdaObject[] = [];
   for (const lambdaName of lambdaNameList) {
     lambdaObjects.push(
       buildLambda(scope, {
         lambdaName: lambdaName,
+        ...props,
       })
     );
   }

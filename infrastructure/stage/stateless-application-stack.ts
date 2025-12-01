@@ -1,8 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import * as events from 'aws-cdk-lib/aws-events';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as secretsManager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 import { StatelessApplicationStackConfig } from './interfaces';
-import { buildAllLambdas } from './lambda';
+import { buildAllLambdas, buildBsshToolsLayer } from './lambda';
 import { buildAllStepFunctions } from './step-functions';
 import { buildAllEventRules } from './event-rules';
 import { buildAllEventBridgeTargets } from './event-targets';
@@ -31,8 +33,30 @@ export class StatelessApplicationStack extends cdk.Stack {
       props.eventBusName
     );
 
+    // Get the basespace api url ssm parameter
+    // And the basespace access token secret object
+    const basespaceSsmParameterObject = ssm.StringParameter.fromStringParameterName(
+      this,
+      'basespaceApiUrlParameter',
+      props.basespaceBaseUrlSsmParameterName
+    );
+
+    const basespaceAccessTokenSecretObject = secretsManager.Secret.fromSecretNameV2(
+      this,
+      'basespaceAccessTokenSecret',
+      props.basespaceAccessTokenSecretId
+    );
+
+    // Build the bssh lambda layer
+    // Build BSSH Tools Layer
+    const bsshToolsLayer = buildBsshToolsLayer(this);
+
     // Build the lambdas
-    const lambdas = buildAllLambdas(this);
+    const lambdas = buildAllLambdas(this, {
+      bsshToolsLayer: bsshToolsLayer,
+      basespaceUrlParameterObject: basespaceSsmParameterObject,
+      basespaceAccessTokenSecretObject: basespaceAccessTokenSecretObject,
+    });
 
     // Build the state machines
     const stateMachines = buildAllStepFunctions(this, {

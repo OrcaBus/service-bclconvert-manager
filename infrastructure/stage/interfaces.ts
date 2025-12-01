@@ -24,4 +24,8 @@ export interface StatelessApplicationStackConfig {
 
   // Stagename helper
   stageName: StageName;
+
+  // Basespace Stuff
+  basespaceBaseUrlSsmParameterName: string;
+  basespaceAccessTokenSecretId: string;
 }

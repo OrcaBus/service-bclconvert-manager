@@ -1,7 +1,13 @@
 import { PythonUvFunction } from '@orcabus/platform-cdk-constructs/lambda';
+import { IStringParameter } from 'aws-cdk-lib/aws-ssm';
+import { ISecret } from 'aws-cdk-lib/aws-secretsmanager';
+import { PythonLayerVersion } from '@aws-cdk/aws-lambda-python-alpha';
 
 export type LambdaName =
-  // Shared SRM / ICA lambdas
+  // SRM SampleSheet State Change
+  | 'createBclconvertWorkflowDraftEventDetail'
+  | 'findWorkflowsByInstrumentRunId'
+  // ICA State Change
   | 'createNewWorkflowRunObject'
   | 'findWorkflow'
   | 'updateWorkflowRunObject'
@@ -9,7 +15,10 @@ export type LambdaName =
   | 'validateDraftDataCompleteSchema';
 
 export const lambdaNameList: LambdaName[] = [
-  // Shared SRM / ICA lambdas
+  // SRM SampleSheet State Change
+  'createBclconvertWorkflowDraftEventDetail',
+  'findWorkflowsByInstrumentRunId',
+  // ICA State Change
   'createNewWorkflowRunObject',
   'findWorkflow',
   'updateWorkflowRunObject',
@@ -23,22 +32,37 @@ export interface LambdaRequirements {
   needsIcav2Tools?: boolean;
   needsSsmParametersAccess?: boolean;
   needsSchemaRegistryAccess?: boolean;
+  needsBsshToolsLayer?: boolean;
 }
 
 // Lambda requirements mapping
 export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
-  // Shared SRM / ICA lambdas
+  // SRM SampleSheet State Change
+  createBclconvertWorkflowDraftEventDetail: {
+    needsOrcabusApiTools: true,
+    needsIcav2Tools: true,
+    needsSsmParametersAccess: true,
+    needsBsshToolsLayer: true,
+  },
+  findWorkflowsByInstrumentRunId: {
+    needsOrcabusApiTools: true,
+  },
+  // ICA State Change lambdas
   createNewWorkflowRunObject: {
     needsOrcabusApiTools: true,
     needsIcav2Tools: true,
+    needsBsshToolsLayer: true,
     needsSsmParametersAccess: true,
   },
   findWorkflow: {
     needsOrcabusApiTools: true,
+    needsIcav2Tools: true,
+    needsBsshToolsLayer: true,
   },
   updateWorkflowRunObject: {
     needsOrcabusApiTools: true,
     needsIcav2Tools: true,
+    needsBsshToolsLayer: true,
   },
   // Shared - validation lambdas
   validateDraftDataCompleteSchema: {
@@ -47,10 +71,20 @@ export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
   },
 };
 
-export interface LambdaInput {
+export interface LambdaInputs {
+  /* Custom layers */
+  bsshToolsLayer: PythonLayerVersion;
+
+  /* basespace Parameters */
+  basespaceUrlParameterObject: IStringParameter;
+  basespaceAccessTokenSecretObject: ISecret;
+}
+
+export interface LambdaInput extends LambdaInputs {
   lambdaName: LambdaName;
 }
 
-export interface LambdaObject extends LambdaInput {
+export interface LambdaObject {
+  lambdaName: LambdaName;
   lambdaFunction: PythonUvFunction;
 }

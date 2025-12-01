@@ -11,6 +11,8 @@ import {
   DEFAULT_WORKFLOW_VERSION,
   SSM_PARAMETER_PATH_WORKFLOW_VERSION,
   SSM_PARAMETER_PATH_PAYLOAD_VERSION,
+  BASESPACE_ACCESS_TOKEN_SECRET_ID,
+  BASESPACE_API_URL_SSM_PARAMETER_NAME,
 } from './constants';
 import { SsmParameterPaths, SsmParameterValues } from './ssm/interfaces';
 
@@ -62,5 +64,8 @@ export const getStatelessStackProps = (stage: StageName): StatelessApplicationSt
     ssmParameterPaths: getSsmParameterPaths(),
     // Stagename
     stageName: stage,
+    // Basespace parameters
+    basespaceBaseUrlSsmParameterName: BASESPACE_API_URL_SSM_PARAMETER_NAME,
+    basespaceAccessTokenSecretId: BASESPACE_ACCESS_TOKEN_SECRET_ID,
   };
 };
