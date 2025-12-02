@@ -54,19 +54,17 @@ from wrapica.project_analysis import (
 
 # Layer imports
 from orcabus_api_tools.utils.aws_helpers import get_ssm_value
-from orcabus_api_tools.sequence import (
-    get_library_id_list_from_instrument_run_id,
-)
 from orcabus_api_tools.workflow import list_workflows
 from orcabus_api_tools.metadata import get_libraries_list_from_library_id_list
 from icav2_tools import set_icav2_env_vars
+
 # BSSH Imports
 from bssh_tool_kit import (
     get_instrument_run_id_from_run_info_xml,
     get_experiment_name_from_instrument_run_id,
     get_basespace_run_id_from_instrument_run_id,
     get_run_folder_input_uri_from_ica_inputs,
-    get_sample_sheet_uri_from_ica_inputs
+    get_sample_sheet_uri_from_ica_inputs, get_library_ids_from_samplesheet_uri
 )
 
 # Globals
@@ -177,8 +175,8 @@ def handler(event, context):
     )
 
     # Use the SRM to query libraries
-    library_id_list_srm = get_library_id_list_from_instrument_run_id(
-        instrument_run_id=instrument_run_id
+    library_id_list = get_library_ids_from_samplesheet_uri(
+        samplesheet_uri=samplesheet_uri
     )
 
     # Generate the workflow run object
@@ -217,7 +215,7 @@ def handler(event, context):
                 "orcabusId": library_obj_['orcabusId'],
             },
             get_libraries_list_from_library_id_list(
-                library_id_list_srm,
+                library_id_list,
                 accept_missing=True
             )
         ))
