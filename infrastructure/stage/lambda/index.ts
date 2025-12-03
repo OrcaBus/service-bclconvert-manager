@@ -50,6 +50,9 @@ export function buildBsshToolsLayer(scope: Construct): PythonLayerVersion {
             `find ${outputDir} -type d -name '__pycache__' -exec rm -rf {}/* \\;`,
             // Delete the __pycache__ directories themselves
             `find ${outputDir} -type d -name '__pycache__' -delete`,
+            // Delete pandas / numpy since we will always have icav2 tools layer installed
+            `pip uninstall pandas numpy`,
+            `rm -rf ${outputDir}/pandas ${outputDir}/numpy`,
           ];
         },
       },

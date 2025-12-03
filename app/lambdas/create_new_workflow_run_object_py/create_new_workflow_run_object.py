@@ -174,7 +174,7 @@ def handler(event, context):
         run_info_xml_uri=(input_uri + 'RunInfo.xml')
     )
 
-    # Use the SRM to query libraries
+    # Query libraries from the sample sheet
     library_id_list = get_library_ids_from_samplesheet_uri(
         samplesheet_uri=samplesheet_uri
     )
@@ -200,7 +200,7 @@ def handler(event, context):
                 "tags": {
                     "instrumentRunId": instrument_run_id,
                     "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
-                    "basespaceRunId": get_basespace_run_id_from_instrument_run_id(instrument_run_id),
+                    "basespaceRunId": int(get_basespace_run_id_from_instrument_run_id(instrument_run_id)),
                 },
                 "engineParameters": {
                     "projectId": project_id,

@@ -124,7 +124,7 @@ def handler(event, context):
                 "tags": {
                     "instrumentRunId": instrument_run_id,
                     "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
-                    "basespaceRunId": get_basespace_run_id_from_instrument_run_id(instrument_run_id),
+                    "basespaceRunId": int(get_basespace_run_id_from_instrument_run_id(instrument_run_id)),
                 }
             }
         }

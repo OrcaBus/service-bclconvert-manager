@@ -111,6 +111,8 @@ def handler(event, context):
     ):
         raise ValueError("Must provide either portalRunId + projectId + pipelineId + analysisId (ICA mode)")
 
+    # Set ICAv2 env vars (this takes a second which is why we don't do it unless we need to)
+    set_icav2_env_vars()
 
     # Get the workflow run object
     workflow_run_object = get_workflow_run_from_portal_run_id(portal_run_id)
@@ -139,15 +141,12 @@ def handler(event, context):
         tags.update({
             "instrumentRunId": instrument_run_id,
             "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
-            "basespaceRunId": get_basespace_run_id_from_instrument_run_id(instrument_run_id),
+            "basespaceRunId": int(get_basespace_run_id_from_instrument_run_id(instrument_run_id)),
         })
 
     # Also set the payload version if not set
     if not latest_payload.get('version'):
         latest_payload['version'] = DEFAULT_PAYLOAD_VERSION
-
-    # Set ICAv2 env vars (this takes a second which is why we don't do it unless we need to)
-    set_icav2_env_vars()
 
     # ICA Inputs
     ica_inputs = get_project_analysis_inputs(
