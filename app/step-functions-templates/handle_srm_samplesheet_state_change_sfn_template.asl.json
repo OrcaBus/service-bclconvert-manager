@@ -18,7 +18,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Arguments": {
-        "FunctionName": "${__find_workflows_by_instrument_run_id_lambda_function_arn___}",
+        "FunctionName": "${__find_workflows_by_instrument_run_id_lambda_function_arn__}",
         "Payload": {
           "instrumentRunId": "{% $instrumentRunId %}"
         }
@@ -60,7 +60,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Arguments": {
-        "FunctionName": "${__create_bclconvert_workflow_draft_event_detail_lambda_function_arn___}",
+        "FunctionName": "${__create_bclconvert_workflow_draft_event_detail_lambda_function_arn__}",
         "Payload": {
           "instrumentRunId": "{% $instrumentRunId %}"
         }
@@ -91,7 +91,7 @@
         "Entries": [
           {
             "Detail": "{% $states.input.eventDetail %}",
-            "DetailType": "${__workflow_run_update_detail_type__}",
+            "DetailType": "${__workflow_run_update_event_detail_type__}",
             "EventBusName": "${__event_bus_name__}",
             "Source": "${__stack_source__}"
           }
