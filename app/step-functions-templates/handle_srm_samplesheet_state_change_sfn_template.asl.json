@@ -4,12 +4,12 @@
   "States": {
     "Save vars": {
       "Type": "Pass",
-      "Next": "Give SRM a minute to also ingest the sampleshhet",
+      "Next": "Give SRM a minute to also ingest the samplesheet",
       "Assign": {
         "instrumentRunId": "{% $states.input.instrumentRunId %}"
       }
     },
-    "Give SRM a minute to also ingest the sampleshhet": {
+    "Give SRM a minute to also ingest the samplesheet": {
       "Type": "Wait",
       "Seconds": 60,
       "Next": "Check for existing BCLConvert Workflows"
