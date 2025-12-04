@@ -168,10 +168,14 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
   }
 
   /*
-    Special if the lambdaName is createNewWorkflowRunObject, we need to add in the ssm parameters
+    Special if the lambdaName is createNewWorkflowRunObject or , we need to add in the ssm parameters
     DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME as the workflow version is stored in SSM
    */
-  if (props.lambdaName === 'createNewWorkflowRunObject') {
+  if (
+    ['createNewWorkflowRunObject', 'createBclconvertWorkflowDraftEventDetail'].includes(
+      props.lambdaName
+    )
+  ) {
     lambdaFunction.addEnvironment(
       'DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME',
       path.join(SSM_PARAMETER_PATH_WORKFLOW_VERSION)
