@@ -84,6 +84,7 @@ def handler(event, context):
         workflow_name=WORKFLOW_RUN_NAME,
         current_status="DRAFT"
     )
+    # Try link on the basespace run id tag
     if len(bclconvert_draft_workflow_list) > 0:
         try:
             workflow_run_object = next(filter(
@@ -94,7 +95,7 @@ def handler(event, context):
                     (
                         get_latest_payload_from_workflow_run(workflow_iter_['orcabusId'])
                         .get("data", {})
-                        .get("engineParameters", {})
+                        .get("tags", {})
                         .get("basespaceRunId")
                     ) == basespace_run_id
                 ),

@@ -102,7 +102,7 @@ def get_basespace_run_id_from_instrument_run_id(
     basespace_run = get_basespace_run_from_instrument_run_id(
         instrument_run_id=instrument_run_id
     )
-    return basespace_run['V1Pre3Id']
+    return int(basespace_run['V1Pre3Id'])
 
 
 def get_experiment_name_from_instrument_run_id(
