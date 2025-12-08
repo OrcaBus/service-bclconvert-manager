@@ -26,8 +26,8 @@ import { PythonLayerVersion } from '@aws-cdk/aws-lambda-python-alpha';
 
 export function buildBsshToolsLayer(scope: Construct): PythonLayerVersion {
   /**
-        Build the bssh tools layer, used by the get manifest lambda function
-    */
+        Build the bssh tools layer, used by lambdas that need BaseSpace/BSSH functionality
+   */
   return new PythonLayerVersion(scope, 'bssh-lambda-layer', {
     entry: path.join(LAYERS_DIR, 'bssh_tool_kit'),
     compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],

@@ -87,10 +87,16 @@ def get_basespace_run_from_instrument_run_id(
     response.raise_for_status()
 
     # Return the run
-    basespace_run_object = next(filter(
-        lambda run_item_iter_: run_item_iter_['Name'] == instrument_run_id,
-        response.json()['Items']
-    ))
+    try:
+        basespace_run_object = next(filter(
+            lambda run_item_iter_: run_item_iter_['Name'] == instrument_run_id,
+            response.json()['Items']
+        ))
+    except StopIteration:
+        raise ValueError(
+            f"Could not find BaseSpace run with instrument run ID "
+            f"'{instrument_run_id}'"
+        )
 
     return basespace_run_object
 

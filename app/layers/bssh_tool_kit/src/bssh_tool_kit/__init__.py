@@ -3,7 +3,7 @@
 """
 BSSH Tool Kit
 
-* Dependent on the OracBus API toolkit and the icav2 tool kit
+* Dependent on the OrcaBus API toolkit and the icav2 tool kit
 
 * Useful for querying the Basespace API (via the requests library).
 

@@ -79,6 +79,8 @@ export const stepFunctionToLambdasMap: Record<StateMachineName, LambdaName[]> = 
   // Handle ICA Event
   handleIcaEvent: [
     // ICA lambdas
+    'addSamplesheetToSrm',
+    'checkSamplesheetInSrm',
     'createNewWorkflowRunObject',
     'findWorkflow',
     'updateWorkflowRunObject',
