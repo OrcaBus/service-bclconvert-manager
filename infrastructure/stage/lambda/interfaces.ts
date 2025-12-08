@@ -8,6 +8,8 @@ export type LambdaName =
   | 'createBclconvertWorkflowDraftEventDetail'
   | 'findWorkflowsByInstrumentRunId'
   // ICA State Change
+  | 'addSamplesheetToSrm'
+  | 'checkSamplesheetInSrm'
   | 'createNewWorkflowRunObject'
   | 'findWorkflow'
   | 'updateWorkflowRunObject'
@@ -19,6 +21,8 @@ export const lambdaNameList: LambdaName[] = [
   'createBclconvertWorkflowDraftEventDetail',
   'findWorkflowsByInstrumentRunId',
   // ICA State Change
+  'addSamplesheetToSrm',
+  'checkSamplesheetInSrm',
   'createNewWorkflowRunObject',
   'findWorkflow',
   'updateWorkflowRunObject',
@@ -46,8 +50,20 @@ export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
   },
   findWorkflowsByInstrumentRunId: {
     needsOrcabusApiTools: true,
+    needsIcav2Tools: true,
+    needsBsshToolsLayer: true,
   },
   // ICA State Change lambdas
+  addSamplesheetToSrm: {
+    needsOrcabusApiTools: true,
+    needsIcav2Tools: true,
+    needsBsshToolsLayer: true,
+  },
+  checkSamplesheetInSrm: {
+    needsOrcabusApiTools: true,
+    needsIcav2Tools: true,
+    needsBsshToolsLayer: true,
+  },
   createNewWorkflowRunObject: {
     needsOrcabusApiTools: true,
     needsIcav2Tools: true,

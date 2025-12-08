@@ -14,21 +14,28 @@ Convert from instrument run id to experiment name, or from experiment name to ba
 """
 
 # Basespace imports
+from .globals import DEFAULT_SAMPLESHEET_CHECKSUM_TYPE
 from .basespace_helpers import (
     get_run_folder_input_uri_from_ica_inputs,
+    download_samplesheet_to_path_from_uri,
     get_sample_sheet_uri_from_ica_inputs,
     get_instrument_run_id_from_run_info_xml,
     get_experiment_name_from_instrument_run_id,
     get_library_ids_from_samplesheet_uri,
     get_basespace_run_id_from_instrument_run_id,
+    get_samplesheet_md5sum_from_samplesheet_uri,
 )
 
 __all__ = [
+    # Globals
+    "DEFAULT_SAMPLESHEET_CHECKSUM_TYPE",
     # Basespace helpers
     "get_run_folder_input_uri_from_ica_inputs",
     "get_sample_sheet_uri_from_ica_inputs",
+    "download_samplesheet_to_path_from_uri",
     "get_instrument_run_id_from_run_info_xml",
     "get_experiment_name_from_instrument_run_id",
     "get_library_ids_from_samplesheet_uri",
-    "get_basespace_run_id_from_instrument_run_id"
+    "get_basespace_run_id_from_instrument_run_id",
+    "get_samplesheet_md5sum_from_samplesheet_uri",
 ]

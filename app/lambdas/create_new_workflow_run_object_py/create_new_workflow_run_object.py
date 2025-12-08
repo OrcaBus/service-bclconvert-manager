@@ -43,7 +43,7 @@ If the following don't exist in the existing payload, they will be created:
 
 # Standard library imports
 import secrets
-from typing import List
+from typing import List, Literal
 from os import environ
 from datetime import datetime, timezone
 
@@ -64,7 +64,8 @@ from bssh_tool_kit import (
     get_experiment_name_from_instrument_run_id,
     get_basespace_run_id_from_instrument_run_id,
     get_run_folder_input_uri_from_ica_inputs,
-    get_sample_sheet_uri_from_ica_inputs, get_library_ids_from_samplesheet_uri
+    get_sample_sheet_uri_from_ica_inputs, get_library_ids_from_samplesheet_uri,
+    get_samplesheet_md5sum_from_samplesheet_uri
 )
 
 # Globals
@@ -75,6 +76,10 @@ WORKFLOW_PREFIXES = [
     'autolaunch',
 ]
 DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME_ENV_VAR = 'DEFAULT_WORKFLOW_VERSION_SSM_PARAMETER_NAME'
+SAMPLESHEET_CHECKSUM_TYPE = Literal[
+    'md5'
+]
+DEFAULT_SAMPLESHEET_CHECKSUM_TYPE: SAMPLESHEET_CHECKSUM_TYPE = 'md5'
 
 
 def create_portal_run_id():
@@ -201,6 +206,10 @@ def handler(event, context):
                     "instrumentRunId": instrument_run_id,
                     "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
                     "basespaceRunId": int(get_basespace_run_id_from_instrument_run_id(instrument_run_id)),
+                    "samplesheetChecksum": get_samplesheet_md5sum_from_samplesheet_uri(
+                        samplesheet_uri=samplesheet_uri
+                    ),
+                    "samplesheetChecksumType": DEFAULT_SAMPLESHEET_CHECKSUM_TYPE
                 },
                 "engineParameters": {
                     "projectId": project_id,

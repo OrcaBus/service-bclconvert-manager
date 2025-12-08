@@ -92,10 +92,16 @@
         {
           "Next": "Update workflow run object",
           "Condition": "{% $workflowRunObject ? true : false %}",
-          "Comment": "Update existing workflow object"
+          "Comment": "Update existing workflow object",
+          "Assign": {
+            "createNewBclConvertWorkflow": false
+          }
         }
       ],
-      "Default": "Create New BCLConvert Workflow Object"
+      "Default": "Create New BCLConvert Workflow Object",
+      "Assign": {
+        "createNewBclConvertWorkflow": true
+      }
     },
     "Update workflow run object": {
       "Type": "Task",
@@ -142,6 +148,89 @@
           }
         ]
       },
+      "Next": "Created new bclconvert workflow"
+    },
+    "Created new bclconvert workflow": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Check samplesheet exists in SRM",
+          "Condition": "{% $createNewBclConvertWorkflow ? true : false %}",
+          "Comment": "Created a new bclconvert workflow"
+        }
+      ],
+      "Default": "Finish"
+    },
+    "Check samplesheet exists in SRM": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${__check_samplesheet_in_srm_lambda_function_arn__}",
+        "Payload": {
+          "instrumentRunId": "{% $workflowRunObject.payload.data.tags.instrumentRunId %}",
+          "samplesheetUri": "{% $workflowRunObject.payload.data.inputs.sampleSheetUri %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "Check SampleSheet in SRM",
+      "Output": {
+        "srmHasSamplesheet": "{% $states.result.Payload.srmHasSamplesheet %}"
+      }
+    },
+    "Check SampleSheet in SRM": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "Add Samplesheet to SRM",
+          "Condition": "{% $states.input.srmHasSamplesheet = false ? false : true %}",
+          "Comment": "Add Missing Samplesheet to SRM"
+        }
+      ],
+      "Default": "Finish"
+    },
+    "Add Samplesheet to SRM": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Output": {},
+      "Arguments": {
+        "FunctionName": "${__add_samplesheet_to_srm_lambda_function_arn__}",
+        "Payload": {
+          "instrumentRunId": "{% $workflowRunObject.payload.data.tags.instrumentRunId %}",
+          "samplesheetUri": "{% $workflowRunObject.payload.data.inputs.sampleSheetUri %}",
+          "analysisId": "{% $analysisId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "End": true
+    },
+    "Finish": {
+      "Type": "Pass",
       "End": true
     },
     "Create New BCLConvert Workflow Object": {

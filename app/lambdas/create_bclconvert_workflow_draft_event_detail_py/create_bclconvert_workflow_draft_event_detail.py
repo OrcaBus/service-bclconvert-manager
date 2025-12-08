@@ -31,9 +31,10 @@ from orcabus_api_tools.sequence import (
 from orcabus_api_tools.workflow import list_workflows
 from orcabus_api_tools.metadata import get_libraries_list_from_library_id_list
 
+from bssh_tool_kit.basespace_helpers import get_samplesheet_md5sum_from_instrument_run_id
 from bssh_tool_kit import (
     get_experiment_name_from_instrument_run_id,
-    get_basespace_run_id_from_instrument_run_id,
+    get_basespace_run_id_from_instrument_run_id, DEFAULT_SAMPLESHEET_CHECKSUM_TYPE,
 )
 
 # Globals
@@ -125,6 +126,8 @@ def handler(event, context):
                     "instrumentRunId": instrument_run_id,
                     "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
                     "basespaceRunId": int(get_basespace_run_id_from_instrument_run_id(instrument_run_id)),
+                    "samplesheetChecksum": get_samplesheet_md5sum_from_instrument_run_id(instrument_run_id),
+                    "samplesheetChecksumType": DEFAULT_SAMPLESHEET_CHECKSUM_TYPE,
                 }
             }
         }

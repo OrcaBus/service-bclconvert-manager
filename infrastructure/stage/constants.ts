@@ -1,7 +1,7 @@
 /* Directory constants */
 import path from 'path';
 import { StageName } from '@orcabus/platform-cdk-constructs/shared-config/accounts';
-import { WorkflowVersionType } from './interfaces';
+import { PipelineId, WorkflowVersionType } from './interfaces';
 import { DATA_SCHEMA_REGISTRY_NAME } from '@orcabus/platform-cdk-constructs/shared-config/event-bridge';
 import { Duration } from 'aws-cdk-lib';
 
@@ -72,7 +72,7 @@ export const BASESPACE_ACCESS_TOKEN_SECRET_ID = '/manual/BaseSpaceAccessTokenSec
 /* Slack constants */
 export const SLACK_TOPIC_NAME = 'AwsChatBotTopic';
 
-export const PIPELINE_IDS_LIST: Record<StageName, string[]> = {
+export const PIPELINE_IDS_LIST: Record<StageName, PipelineId[]> = {
   BETA: ['ef5501df-51e1-444b-b484-c9b5f28ac4dc'],
   GAMMA: ['ef5501df-51e1-444b-b484-c9b5f28ac4dc'],
   PROD: ['ef5501df-51e1-444b-b484-c9b5f28ac4dc'],

@@ -6,6 +6,7 @@ from tempfile import NamedTemporaryFile
 from typing import List, Dict, Union
 from os import environ
 import requests
+import hashlib
 
 # V2 Samplesheet imports
 from v2_samplesheet_maker.functions.run_info_reader import (
@@ -27,6 +28,9 @@ from wrapica.project_data import (
 # Layer imports
 from orcabus_api_tools.utils.aws_helpers import get_ssm_value
 from orcabus_api_tools.utils.aws_helpers import get_secret_value
+from orcabus_api_tools.sequence import (
+    get_sample_sheet_from_instrument_run_id
+)
 
 # Local imports
 from .globals import (
@@ -174,6 +178,23 @@ def get_sample_sheet_uri_from_ica_inputs(
     )
 
 
+def download_samplesheet_to_path_from_uri(
+        samplesheet_uri: str,
+        output_path:  Path
+):
+    # Get the samplesheet uri as a project data object
+    project_data_obj = convert_uri_to_project_data_obj(
+        samplesheet_uri
+    )
+
+    # Read the samplesheet contents
+    read_icav2_file_contents(
+        project_id=project_data_obj.project_id,
+        data_id=project_data_obj.data.id,
+        output_path=output_path,
+    )
+
+
 def get_library_ids_from_samplesheet_uri(
         samplesheet_uri: str,
 ):
@@ -186,16 +207,10 @@ def get_library_ids_from_samplesheet_uri(
         # Download the samplesheet to a temporary file
         samplesheet_path = Path(temp_samplesheet_file.name)
 
-        # Get the samplesheet uri as a project data object
-        project_data_obj = convert_uri_to_project_data_obj(
-            samplesheet_uri
-        )
-
-        # Read the samplesheet contents
-        read_icav2_file_contents(
-            project_id=project_data_obj.project_id,
-            data_id=project_data_obj.data.id,
-            output_path=samplesheet_path,
+        # Download the samplesheet to the temporary path
+        download_samplesheet_to_path_from_uri(
+            samplesheet_uri=samplesheet_uri,
+            output_path=samplesheet_path
         )
 
         # Read the samplesheet into a DataFrame
@@ -239,3 +254,36 @@ def get_instrument_run_id_from_run_info_xml(
         )
 
         return run_info_obj["RunInfo"]["Run"]["@Id"]
+
+
+def get_samplesheet_md5sum_from_samplesheet_uri(
+        samplesheet_uri: str,
+) -> str:
+    """
+    Given a samplesheet URI, return the MD5 sum.
+    :param samplesheet_uri:
+    :return:
+    """
+    # Get the samplesheet uri as a project data object
+    project_data_obj = convert_uri_to_project_data_obj(
+        samplesheet_uri
+    )
+
+    return (
+        hashlib.md5(
+            read_icav2_file_contents(
+                project_id=project_data_obj.project_id,
+                data_id=project_data_obj.data.id
+            ).encode('utf-8')
+        ).hexdigest()
+    )
+
+
+def get_samplesheet_md5sum_from_instrument_run_id(
+    instrument_run_id: str
+) -> str:
+    samplesheet_contents: str = get_sample_sheet_from_instrument_run_id(
+        instrument_run_id=instrument_run_id
+    )['sampleSheetContentOriginal']
+
+    return hashlib.md5(samplesheet_contents.encode('utf-8')).hexdigest()

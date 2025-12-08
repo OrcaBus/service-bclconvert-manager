@@ -23,6 +23,14 @@
         "experimentRunName": {
           "type": "string",
           "examples": ["Name of the run"]
+        },
+        "samplesheetChecksum": {
+          "type": "string"
+        },
+        "samplesheetChecksumType": {
+          "type": "string",
+          "enum": ["md5"],
+          "examples": ["md5"]
         }
       },
       "required": ["instrumentRunId", "basespaceRunId", "experimentRunName"]
