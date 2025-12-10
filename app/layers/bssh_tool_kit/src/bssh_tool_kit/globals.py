@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+"""
+Layer Globals
+"""
+from typing import Literal
+
+# Globals
+# SSM / Secrets Manager Parameters
+BASESPACE_URL_SSM_PARAMETER_NAME_ENV_VAR = "BASESPACE_URL_SSM_PARAMETER_NAME"
+BASESPACE_ACCESS_TOKEN_SECRET_NAME_ENV_VAR = "BASESPACE_ACCESS_TOKEN_SECRET_ID"  # pragma: allowlist secret
+
+SAMPLESHEET_CHECKSUM_TYPE = Literal[
+    'md5'
+]
+DEFAULT_SAMPLESHEET_CHECKSUM_TYPE: SAMPLESHEET_CHECKSUM_TYPE = 'md5'

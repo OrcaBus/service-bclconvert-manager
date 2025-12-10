@@ -8,12 +8,16 @@ import { SsmParameterPaths } from '../ssm/interfaces';
  * Step Function Interfaces
  */
 export type StateMachineName =
+  // Handle SRM Event
+  | 'handleSrmSamplesheetStateChange'
   // Handle ICA Event
   | 'handleIcaEvent'
   // Validate Draft Data to Ready
   | 'validateDraftToReady';
 
 export const stateMachineNameList: StateMachineName[] = [
+  // Handle SRM Event
+  'handleSrmSamplesheetStateChange',
   // Handle ICA Event
   'handleIcaEvent',
   // Validate Draft Data to Ready
@@ -49,6 +53,10 @@ export type WireUpPermissionsProps = BuildStepFunctionProps & StepFunctionObject
 export type BuildStepFunctionsProps = Omit<BuildStepFunctionProps, 'stateMachineName'>;
 
 export const stepFunctionsRequirementsMap: Record<StateMachineName, StepFunctionRequirements> = {
+  // Handle SRM Event
+  handleSrmSamplesheetStateChange: {
+    needsEventPutPermission: true,
+  },
   // Handle ICA Event
   handleIcaEvent: {
     needsSsmParameterStoreAccess: true,
@@ -62,9 +70,17 @@ export const stepFunctionsRequirementsMap: Record<StateMachineName, StepFunction
 };
 
 export const stepFunctionToLambdasMap: Record<StateMachineName, LambdaName[]> = {
+  // Handle SRM Event
+  handleSrmSamplesheetStateChange: [
+    // SRM lambdas
+    'createBclconvertWorkflowDraftEventDetail',
+    'findWorkflowsByInstrumentRunId',
+  ],
   // Handle ICA Event
   handleIcaEvent: [
-    // Shared SRM / ICA lambdas
+    // ICA lambdas
+    'addSamplesheetToSrm',
+    'checkSamplesheetInSrm',
     'createNewWorkflowRunObject',
     'findWorkflow',
     'updateWorkflowRunObject',

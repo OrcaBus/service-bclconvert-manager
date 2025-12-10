@@ -7,10 +7,14 @@ import { StepFunctionObject } from '../step-functions/interfaces';
  * EventBridge Target Interfaces
  */
 export type EventBridgeTargetName =
+  // SRM Samplesheet Event to handleSfnTarget
+  | 'srmSamplesheetEventToHandleSfnTarget'
   // Validate draft to ready
-  'draftToValidateDraftSfnTarget';
+  | 'draftToValidateDraftSfnTarget';
 
 export const eventBridgeTargetsNameList: EventBridgeTargetName[] = [
+  // SRM Samplesheet Event to handleSfnTarget
+  'srmSamplesheetEventToHandleSfnTarget',
   // Validate draft to ready
   'draftToValidateDraftSfnTarget',
 ];
