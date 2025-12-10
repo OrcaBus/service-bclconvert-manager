@@ -3,6 +3,7 @@
 """
 Check if the samplesheet exists in the SRM manager for the given instrument run id.
 """
+from icav2_tools import set_icav2_env_vars
 
 #!/usr/bin/env python3
 
@@ -38,6 +39,9 @@ def handler(event, context):
     :param context:
     :return:
     """
+    # Set ica env vars
+    set_icav2_env_vars()
+
     # ICA Mode
     instrument_run_id = event.get("instrumentRunId")
     samplesheet_uri = event.get("samplesheetUri")

@@ -15,6 +15,7 @@ from textwrap import dedent
 
 # Layer imports
 from orcabus_api_tools.sequence import add_samplesheet
+from icav2_tools import set_icav2_env_vars
 from bssh_tool_kit import download_samplesheet_to_path_from_uri
 
 # Globals
@@ -34,6 +35,8 @@ def handler(event, context):
     :param context:
     :return:
     """
+    # Set icav2 env vars
+    set_icav2_env_vars()
 
     # Inputs
     instrument_run_id = event.get("instrumentRunId")
