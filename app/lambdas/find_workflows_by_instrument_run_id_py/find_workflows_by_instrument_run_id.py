@@ -3,11 +3,15 @@
 """
 Find bclconvert workflows by the instrument run id,
 
-Here we only want to find the workflows in 'DRAFT' mode, where the payload is not empty and the payload.data.tags has
-a key 'instrumentRunId' with the given value.
+Here we only want to find the workflows in where the payload is not empty and the payload.data.tags has
+a key 'instrumentRunId' with the given value and where we have a matching samplesheet to the value stored in the SRM.
+
+If we have a matching samplesheet, chances are we have a link with this BCLConvert run already.
 
 Otherwise return an empty list
 """
+
+# Standard library imports
 from functools import reduce
 from operator import concat
 
@@ -51,11 +55,13 @@ def handler(event, context):
                 "DRAFT",
                 "READY",
                 "STARTING",
-                "RUNNING"
+                "RUNNING",
+                "SUCCEEDED",
             ]
         ))
     ))
 
+    # No runs with the status of interest, return empty
     if len(bclconvert_workflow_list) == 0:
         return {
             "workflowRunsList": []
