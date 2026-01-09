@@ -20,7 +20,6 @@ import {
   STACK_PREFIX,
   STEP_FUNCTIONS_DIR,
   SUCCEEDED_STATUS,
-  WORKFLOW_RUN_STATE_CHANGE_DETAIL_TYPE,
   WORKFLOW_RUN_UPDATE_EVENT_DETAIL_TYPE,
 } from '../constants';
 import * as cdk from 'aws-cdk-lib';
@@ -57,8 +56,6 @@ function createStateMachineDefinitionSubstitutions(props: BuildStepFunctionProps
   // Events
   if (sfnRequirements.needsEventPutPermission) {
     definitionSubstitutions['__event_bus_name__'] = props.eventBus.eventBusName;
-    definitionSubstitutions['__workflow_run_state_change_event_detail_type__'] =
-      WORKFLOW_RUN_STATE_CHANGE_DETAIL_TYPE;
     definitionSubstitutions['__workflow_run_update_event_detail_type__'] =
       WORKFLOW_RUN_UPDATE_EVENT_DETAIL_TYPE;
     definitionSubstitutions['__stack_source__'] = EVENT_SOURCE;
