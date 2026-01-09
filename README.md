@@ -114,6 +114,12 @@ and `cdk-stateful`.
 - EventBridge Rules
 - EventBridge Targets
 
+
+### External Setup Requirements
+
+Please view [the ica events setup docs](docs/operation/ica-events-setup/README.md) for instructions on setting up
+the necessary ICA notifications to forward events to the SQS queue.
+
 ### CDK Commands
 
 You can access CDK commands using the `pnpm` wrapper script.
