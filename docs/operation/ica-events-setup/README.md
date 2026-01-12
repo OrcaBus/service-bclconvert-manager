@@ -37,9 +37,9 @@ In the Create Notification dialog, select the following options:
 
 - Event: Analysis status changed
 - Type: SQS
-- Address: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
+- Address: `https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>`
 
-Where queue-name will be the name of the ICA SQS Queue in the [infrastructure constants file](../../../../infrastructure/stage/constants.ts)
+Where queue-name will be the name of the ICA SQS Queue in the [infrastructure constants file](/infrastructure/stage/constants.ts)
 
 You may wish to select the 'Send Test Message' to confirm that the SQS queue is receiving messages.
 
