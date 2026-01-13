@@ -1,6 +1,8 @@
 BCLConvert Manager
 ================================================================================
 
+## Table of Contents <!-- omit in toc -->
+
 - [Service Description](#service-description)
   - [Summary](#summary)
   - [Events Overview](#events-overview)
@@ -56,10 +58,11 @@ to the BCLConvert job when we received the SequenceRunManager event.
 
 ### Consumed Events
 
-| Name / DetailType              | Source                       | Schema Link                                                                                                                                                                         | Description                |
-|--------------------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
-| `SequenceRunSampleSheetChange` | `orcabus.sequencerunmanager` | [SequenceRunSampleSheetChange](https://github.com/OrcaBus/service-sequence-run-manager/blob/main/docs/events/SequenceRunSampleSheetChange/SequenceRunSampleSheetChange.schema.json) | SRM Run State Changed      |
-| `WorkflowRunStateChange`       | `orcabus.workflowmanager`    | [WorkflowRunStateChange](https://github.com/OrcaBus/service-workflow-manager/blob/main/docs/events/WorkflowRunStateChange/WorkflowRunStateChange.schema.json)                       | Workflow Run State Changed |
+| Name / DetailType              | Source                       | Schema Link                                                                                                                                                                         | Description                              |
+|--------------------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| `ICA_EXEC_028`                 | Custom SQS Queue             | N/A                                                                                                                                                                                 | ICA Analysis Run State Change - External |
+| `SequenceRunSampleSheetChange` | `orcabus.sequencerunmanager` | [SequenceRunSampleSheetChange](https://github.com/OrcaBus/service-sequence-run-manager/blob/main/docs/events/SequenceRunSampleSheetChange/SequenceRunSampleSheetChange.schema.json) | SRM Run State Changed                    |
+| `WorkflowRunStateChange`       | `orcabus.workflowmanager`    | [WorkflowRunStateChange](https://github.com/OrcaBus/service-workflow-manager/blob/main/docs/events/WorkflowRunStateChange/WorkflowRunStateChange.schema.json)                       | Workflow Run State Changed               |
 
 ### Published Events
 
@@ -113,7 +116,6 @@ and `cdk-stateful`.
 - StepFunctions
 - EventBridge Rules
 - EventBridge Targets
-
 
 ### External Setup Requirements
 
