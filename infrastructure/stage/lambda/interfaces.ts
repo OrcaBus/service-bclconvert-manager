@@ -37,6 +37,7 @@ export interface LambdaRequirements {
   needsSsmParametersAccess?: boolean;
   needsSchemaRegistryAccess?: boolean;
   needsBsshToolsLayer?: boolean;
+  needsExtendedTimeout?: boolean;
 }
 
 // Lambda requirements mapping
@@ -52,6 +53,7 @@ export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
     needsOrcabusApiTools: true,
     needsIcav2Tools: true,
     needsBsshToolsLayer: true,
+    needsExtendedTimeout: true,
   },
   // ICA State Change lambdas
   addSamplesheetToSrm: {
