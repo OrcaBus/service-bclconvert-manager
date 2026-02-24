@@ -71,7 +71,7 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
     architecture: lambda.Architecture.ARM_64,
     index: lambdaNameToSnakeCase + '.py',
     handler: 'handler',
-    timeout: Duration.seconds(60),
+    timeout: lambdaRequirements.needsExtendedTimeout ? Duration.minutes(5) : Duration.minutes(1),
     memorySize: 2048,
     includeOrcabusApiToolsLayer: lambdaRequirements.needsOrcabusApiTools,
     includeIcav2Layer: lambdaRequirements.needsIcav2Tools,
