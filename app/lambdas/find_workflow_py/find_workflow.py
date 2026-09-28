@@ -35,6 +35,14 @@ from bssh_tool_kit import (
 
 # Globals
 WORKFLOW_RUN_NAME = 'bclconvert'
+TERMINATED_STATUS_LIST = [
+    'FAILED',
+    'ABORTED',
+    'CANCELLED',
+    'SUCCEEDED',
+    'RESOLVED',
+    'DEPRECATED'
+]
 
 
 def handler(event, context):
@@ -49,10 +57,20 @@ def handler(event, context):
         raise ValueError("Must provide projectId + analysisId")
 
     # Get bclconvert workflow objects
-    bclconvert_workflow_list = list_workflow_runs(
-        workflow_name=WORKFLOW_RUN_NAME,
-    )
+    bclconvert_workflow_list = list(filter(
+        lambda workflow_iter_: (
+            workflow_iter_['currentState']['status'] not in TERMINATED_STATUS_LIST
+        ),
+        sorted(
+            list_workflow_runs(
+                workflow_name=WORKFLOW_RUN_NAME,
+            ),
+            key=lambda workflow_iter_: workflow_iter_['orcabusId'],
+            reverse=True,
+        )
+    ))
 
+    # Check if any workflows found
     if len(bclconvert_workflow_list) == 0:
         return None
 
