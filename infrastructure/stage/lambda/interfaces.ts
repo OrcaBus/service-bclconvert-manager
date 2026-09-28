@@ -76,6 +76,7 @@ export const lambdaRequirementsMap: Record<LambdaName, LambdaRequirements> = {
     needsOrcabusApiTools: true,
     needsIcav2Tools: true,
     needsBsshToolsLayer: true,
+    needsExtendedTimeout: true,
   },
   updateWorkflowRunObject: {
     needsOrcabusApiTools: true,
