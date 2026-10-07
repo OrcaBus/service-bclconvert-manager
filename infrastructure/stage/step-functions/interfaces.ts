@@ -58,10 +58,11 @@ export const stepFunctionsRequirementsMap: Record<StateMachineName, StepFunction
     needsEventPutPermission: true,
   },
   // Handle ICA Event
+  // Standard step function started asynchronously by the durable handleIcaEvent
+  // lambda; it unlocks the durable callback id when it completes.
   handleIcaEvent: {
     needsSsmParameterStoreAccess: true,
     needsEventPutPermission: true,
-    isExpressSfn: true,
   },
   // Validate Draft Data to Ready
   validateDraftToReady: {
@@ -84,6 +85,8 @@ export const stepFunctionToLambdasMap: Record<StateMachineName, LambdaName[]> = 
     'createNewWorkflowRunObject',
     'findWorkflow',
     'updateWorkflowRunObject',
+    // Callback unlock
+    'unlockCallbackId',
   ],
   // Validate Draft Data to Ready
   validateDraftToReady: [

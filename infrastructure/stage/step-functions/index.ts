@@ -44,7 +44,7 @@ function createStateMachineDefinitionSubstitutions(props: BuildStepFunctionProps
   for (const lambdaObject of lambdaFunctions) {
     const sfnSubstitutionKey = `__${camelCaseToSnakeCase(lambdaObject.lambdaName)}_lambda_function_arn__`;
     definitionSubstitutions[sfnSubstitutionKey] =
-      lambdaObject.lambdaFunction.currentVersion.functionArn;
+      lambdaObject.lambdaFunction.latestVersion.functionArn;
   }
 
   // Miscellaneous substitutions
@@ -114,8 +114,36 @@ function wireUpStateMachinePermissions(props: WireUpPermissionsProps): void {
   }
 
   /* Allow the state machine to invoke the lambda function */
+  /* We grant invoke on the whole function (all versions) rather than a pinned version */
+  /* so that the state machine always invokes $LATEST */
   for (const lambdaObject of lambdaFunctions) {
-    lambdaObject.lambdaFunction.currentVersion.grantInvoke(props.sfnObject);
+    lambdaObject.lambdaFunction.grantInvoke(props.sfnObject);
+  }
+
+  /* AwsSolutions-IAM5 - grantInvoke against $LATEST adds a wildcard for the version qualifier */
+  NagSuppressions.addResourceSuppressions(
+    props.sfnObject,
+    [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason:
+          'We invoke $LATEST to allow redrives after Lambda bug fixes without redeploying the state machine',
+      },
+    ],
+    true
+  );
+
+  /*
+    The durable handleIcaEvent lambda starts the handleIcaEvent step function
+    asynchronously. Grant it permission to start this state machine.
+   */
+  if (props.stateMachineName === 'handleIcaEvent') {
+    const handleIcaEventLambdaObject = props.lambdaObjects.find(
+      (lambdaObject) => lambdaObject.lambdaName === 'handleIcaEvent'
+    );
+    if (handleIcaEventLambdaObject) {
+      props.sfnObject.grantStartExecution(handleIcaEventLambdaObject.lambdaFunction);
+    }
   }
 }
 
@@ -124,7 +152,9 @@ function buildStepFunction(scope: Construct, props: BuildStepFunctionProps): Ste
   const sfnRequirements = stepFunctionsRequirementsMap[props.stateMachineName];
 
   /* Create the state machine definition substitutions */
-  const stateMachine = new sfn.StateMachine(scope, props.stateMachineName, {
+  /* Suffix the construct id with '-sfn' so it does not collide with a lambda */
+  /* construct that shares the same camelCase name (e.g. handleIcaEvent) */
+  const stateMachine = new sfn.StateMachine(scope, `${props.stateMachineName}-sfn`, {
     stateMachineName: `${STACK_PREFIX}--${props.stateMachineName}`,
     definitionBody: sfn.DefinitionBody.fromFile(
       path.join(STEP_FUNCTIONS_DIR, sfnNameToSnakeCase + `_sfn_template.asl.json`)
