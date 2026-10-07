@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 
 """
-Check if the samplesheet exists in the SRM manager for the given instrument run id.
-"""
-from icav2_tools import set_icav2_env_vars
-
-#!/usr/bin/env python3
-
-"""
 Given just an instrument run id, generate a draft event detail.
 
 This lambda comes from the SRM, where we only have the instrument run id.
@@ -27,6 +20,8 @@ We do not intend to set the inputs or the engine parameters here
 # Standard library imports
 
 # Layer imports
+from icav2_tools import set_icav2_env_vars
+
 from bssh_tool_kit.basespace_helpers import (
     get_samplesheet_md5sum_from_instrument_run_id,
     get_samplesheet_md5sum_from_samplesheet_uri
