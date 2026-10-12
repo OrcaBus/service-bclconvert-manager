@@ -189,7 +189,7 @@
       "Choices": [
         {
           "Next": "Add Samplesheet to SRM",
-          "Condition": "{% $states.input.srmHasSamplesheet = false ? false : true %}",
+          "Condition": "{% $states.input.srmHasSamplesheet = false ? true : false %}",
           "Comment": "Add Missing Samplesheet to SRM"
         }
       ],
