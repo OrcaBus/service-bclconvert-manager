@@ -29,9 +29,13 @@ WORKFLOW_RUN_NAME = 'bclconvert'
 def handler(event, context):
     # Get inputs
     instrument_run_id = event.get('instrumentRunId')
+    sequencer_run_id = event.get('sequenceRunId')
 
     # Get latest samplesheet from instrument run id
-    samplesheet_md5sum = get_samplesheet_md5sum_from_instrument_run_id(instrument_run_id)
+    samplesheet_md5sum = get_samplesheet_md5sum_from_instrument_run_id(
+        instrument_run_id=instrument_run_id,
+        sequencer_run_id=sequencer_run_id,
+    )
 
     # Get bclconvert workflow objects
     bclconvert_workflow_list = list_workflow_runs(

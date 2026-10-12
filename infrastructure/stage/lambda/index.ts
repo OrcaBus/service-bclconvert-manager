@@ -15,7 +15,12 @@ import {
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
-import { SSM_SCHEMA_ROOT, SCHEMA_REGISTRY_NAME } from '../constants';
+import {
+  SSM_SCHEMA_ROOT,
+  SCHEMA_REGISTRY_NAME,
+  STACK_PREFIX,
+  ICA_EVENT_QUEUE_MAX_CONCURRENCY,
+} from '../constants';
 import { Duration } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
@@ -23,6 +28,7 @@ import { camelCaseToKebabCase, camelCaseToSnakeCase } from '../utils';
 import * as path from 'path';
 import { SchemaNames } from '../event-schemas/interfaces';
 import { PythonLayerVersion } from '@aws-cdk/aws-lambda-python-alpha';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 export function buildBsshToolsLayer(scope: Construct): PythonLayerVersion {
   /**
@@ -75,6 +81,14 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
     memorySize: 2048,
     includeOrcabusApiToolsLayer: lambdaRequirements.needsOrcabusApiTools,
     includeIcav2Layer: lambdaRequirements.needsIcav2Tools,
+    durableConfig: lambdaRequirements.needsDurableExecutionPermissions
+      ? {
+          // Cannot exceed 15 minutes when used as an SQS event source
+          // https://docs.aws.amazon.com/lambda/latest/dg/durable-invoking-esm.html#durable-esm-duration-limit
+          executionTimeout: Duration.minutes(15),
+          retentionPeriod: Duration.days(1),
+        }
+      : undefined,
   });
 
   // AwsSolutions-IAM4 - We need to add this for the lambda to work
@@ -187,6 +201,64 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
     lambdaFunction.addEnvironment(
       'SSM_SCHEMA_NAME',
       path.join(SSM_SCHEMA_ROOT, camelCaseToKebabCase(draftSchemaName), 'latest')
+    );
+  }
+
+  /*
+    The durable handleIcaEvent lambda consumes the ICA event SQS queue directly.
+    It starts the handleIcaEvent step function asynchronously (passing a durable
+    callback id) and needs to know the step function ARN. The permission to start
+    the step function is granted when the step function is built.
+   */
+  if (lambdaRequirements.needsIcaEventQueueEventSource) {
+    lambdaFunction.addEnvironment(
+      'HANDLE_ICA_EVENT_SFN_ARN',
+      `arn:aws:states:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:stateMachine:${STACK_PREFIX}--${props.handleIcaEventSfnName}`
+    );
+
+    lambdaFunction.currentVersion.addEventSource(
+      new SqsEventSource(props.icaEventQueue, {
+        // Process one message at a time with bounded concurrency
+        maxConcurrency: ICA_EVENT_QUEUE_MAX_CONCURRENCY,
+        batchSize: 1,
+      })
+    );
+  }
+
+  /*
+    The durable handler dedups SQS messages via the callback DynamoDB table.
+   */
+  if (lambdaRequirements.needsCallbackDbPermissions) {
+    props.callbackTable.grantReadWriteData(lambdaFunction);
+    lambdaFunction.addEnvironment('CALLBACK_DATABASE_NAME', props.callbackTable.tableName);
+  }
+
+  /*
+    The unlockCallbackId lambda releases the durable execution callback once the
+    step function completes. The resource ARNs are created dynamically, so we
+    grant on a wildcard and suppress the resulting cdk-nag finding.
+   */
+  if (lambdaRequirements.needsCallbackPermissions) {
+    lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['lambda:SendDurableExecutionCallbackSuccess'],
+        resources: [
+          `arn:aws:lambda:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:function:*:*/durable-execution/*/*`,
+        ],
+      })
+    );
+    NagSuppressions.addResourceSuppressions(
+      lambdaFunction,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Send DurableExecutionCallback success permissions to dynamic resources.',
+          appliesTo: [
+            'Resource::arn:aws:lambda:<AWS::Region>:<AWS::AccountId>:function:*:*/durable-execution/*/*',
+          ],
+        },
+      ],
+      true
     );
   }
 

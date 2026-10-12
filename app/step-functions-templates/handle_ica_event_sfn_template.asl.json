@@ -1,22 +1,16 @@
 {
-  "Comment": "A description of my state machine",
-  "StartAt": "Set input",
+  "Comment": "Handle an ICA analysis state change event. Started asynchronously by the durable handle-ica-event lambda, which passes a callbackId that is unlocked once processing is complete.",
+  "StartAt": "Set vars",
   "States": {
-    "Set input": {
-      "Type": "Pass",
-      "Next": "Set vars",
-      "Output": "{% $states.input.input[0].payload %}",
-      "Assign": {
-        "projectId": "{% $states.input.input[0].projectId %}"
-      }
-    },
     "Set vars": {
       "Type": "Pass",
       "Next": "Get valid pipeline ids",
       "Assign": {
+        "projectId": "{% $states.input.projectId %}",
         "status": "{% $states.input.status %}",
-        "pipelineId": "{% $states.input.pipeline.id %}",
-        "analysisId": "{% $states.input.id %}"
+        "pipelineId": "{% $states.input.pipelineId %}",
+        "analysisId": "{% $states.input.analysisId %}",
+        "callbackId": "{% $states.input.callbackId %}"
       }
     },
     "Get valid pipeline ids": {
@@ -54,7 +48,7 @@
     },
     "Irrelevant analysis / status": {
       "Type": "Pass",
-      "End": true
+      "Next": "Unlock callback id"
     },
     "Get BCLConvert workflow run object": {
       "Type": "Task",
@@ -159,7 +153,7 @@
           "Comment": "Created a new bclconvert workflow"
         }
       ],
-      "Default": "Finish"
+      "Default": "Unlock callback id"
     },
     "Check samplesheet exists in SRM": {
       "Type": "Task",
@@ -195,11 +189,11 @@
       "Choices": [
         {
           "Next": "Add Samplesheet to SRM",
-          "Condition": "{% $states.input.srmHasSamplesheet = false ? false : true %}",
+          "Condition": "{% $states.input.srmHasSamplesheet = false ? true : false %}",
           "Comment": "Add Missing Samplesheet to SRM"
         }
       ],
-      "Default": "Finish"
+      "Default": "Unlock callback id"
     },
     "Add Samplesheet to SRM": {
       "Type": "Task",
@@ -227,11 +221,7 @@
           "JitterStrategy": "FULL"
         }
       ],
-      "End": true
-    },
-    "Finish": {
-      "Type": "Pass",
-      "End": true
+      "Next": "Unlock callback id"
     },
     "Create New BCLConvert Workflow Object": {
       "Type": "Task",
@@ -263,6 +253,41 @@
       "Assign": {
         "workflowRunObject": "{% $states.result.Payload.workflowRunObject %}"
       }
+    },
+    "Unlock callback id": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Output": {},
+      "Arguments": {
+        "FunctionName": "${__unlock_callback_id_lambda_function_arn__}",
+        "Payload": {
+          "callbackId": "{% $callbackId %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "Complete"
+        }
+      ],
+      "Next": "Complete"
+    },
+    "Complete": {
+      "Type": "Succeed"
     }
   },
   "QueryLanguage": "JSONata"

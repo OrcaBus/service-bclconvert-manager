@@ -3,7 +3,7 @@
 # Standard library imports
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from os import environ
 import requests
 import hashlib
@@ -286,10 +286,12 @@ def get_samplesheet_md5sum_from_samplesheet_uri(
 
 
 def get_samplesheet_md5sum_from_instrument_run_id(
-    instrument_run_id: str
+    instrument_run_id: str,
+    sequencer_run_id: Optional[str] = None,
 ) -> str:
     samplesheet_contents: str = get_sample_sheet_from_instrument_run_id(
-        instrument_run_id=instrument_run_id
+        instrument_run_id=instrument_run_id,
+        sequence_run_id=sequencer_run_id,
     )['sampleSheetContentOriginal']
 
     return hashlib.md5(samplesheet_contents.encode('utf-8')).hexdigest()
