@@ -90,6 +90,7 @@ def handler(event, context):
     """
     # ICA Mode
     instrument_run_id = event.get("instrumentRunId")
+    sequencer_run_id = event.get("sequencerRunId")
 
     # Generate the portal run id
     portal_run_id = create_portal_run_id()
@@ -126,7 +127,10 @@ def handler(event, context):
                     "instrumentRunId": instrument_run_id,
                     "experimentRunName": get_experiment_name_from_instrument_run_id(instrument_run_id),
                     "basespaceRunId": int(get_basespace_run_id_from_instrument_run_id(instrument_run_id)),
-                    "samplesheetChecksum": get_samplesheet_md5sum_from_instrument_run_id(instrument_run_id),
+                    "samplesheetChecksum": get_samplesheet_md5sum_from_instrument_run_id(
+                        instrument_run_id=instrument_run_id,
+                        sequencer_run_id=sequencer_run_id,
+                    ),
                     "samplesheetChecksumType": DEFAULT_SAMPLESHEET_CHECKSUM_TYPE,
                 }
             }

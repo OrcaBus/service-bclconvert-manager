@@ -56,13 +56,21 @@ export const SCHEMA_REGISTRY_NAME = DATA_SCHEMA_REGISTRY_NAME;
 export const SSM_SCHEMA_ROOT = path.join(SSM_PARAMETER_PATH_PREFIX, 'schemas');
 
 /* SQS Queue constants */
-export const EVENT_PIPE_NAME = 'BclConvertAnalysisEventPipe';
 // The SQS name should be noted since the ARN is required when
 // setting up the notifications of the project
 export const ICA_SQS_NAME = 'BclConvertAnalysisSqsQueue';
-export const ICA_QUEUE_VIZ_TIMEOUT = Duration.seconds(300); // 5 minutes - duration of express state machine.
+// The queue is consumed by the durable handleIcaEvent lambda, whose durable
+// execution can run for up to 15 minutes. The visibility timeout must be at
+// least as long as the lambda's maximum processing time.
+export const ICA_QUEUE_VIZ_TIMEOUT = Duration.minutes(15);
+// Bounded concurrency for the durable handleIcaEvent lambda consuming the queue
+export const ICA_EVENT_QUEUE_MAX_CONCURRENCY = 5;
 export const DLQ_ALARM_THRESHOLD = 1;
 export const ICA_AWS_ACCOUNT_NUMBER = '079623148045';
+
+/* DynamoDB constants */
+// Table used by the durable handleIcaEvent lambda to de-duplicate SQS messages
+export const CALLBACK_TABLE_NAME = 'bclconvert-manager-callback-table';
 
 // External SSMs/ Secrets
 export const BASESPACE_API_URL_SSM_PARAMETER_NAME = '/manual/BaseSpaceApiUrl'; // "https://api.aps2.sh.basespace.illumina.com"
