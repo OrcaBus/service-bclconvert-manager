@@ -3,10 +3,11 @@ import { Construct } from 'constructs';
 import { StatefulApplicationStackConfig } from './interfaces';
 import { buildSsmParameters } from './ssm';
 import { buildSchemasAndRegistry } from './event-schemas';
-import { createEventBridgePipe, getTopicArnFromTopicName } from './sqs';
+import { createMonitoredQueue, getTopicArnFromTopicName } from './sqs';
+import { buildCallbackTable } from './dynamodb';
 import {
+  CALLBACK_TABLE_NAME,
   DLQ_ALARM_THRESHOLD,
-  EVENT_PIPE_NAME,
   ICA_AWS_ACCOUNT_NUMBER,
   ICA_QUEUE_VIZ_TIMEOUT,
   ICA_SQS_NAME,
@@ -35,16 +36,21 @@ export class StatefulApplicationStack extends GitStack {
     // Add to the schema registry
     buildSchemasAndRegistry(this);
 
-    // Build the event sqs pipe
-    // Create the event pipe to join the ICA SQS queue to the event bus
-    createEventBridgePipe(this, {
-      stepFunctionName: 'handleIcaEvent',
-      icaEventPipeName: EVENT_PIPE_NAME,
+    // Create the monitored ICA SQS queue.
+    // This queue is consumed directly by the durable handleIcaEvent lambda
+    // (wired up as an SQS event source in the stateless stack).
+    createMonitoredQueue(this, {
       icaQueueName: ICA_SQS_NAME,
       icaQueueVizTimeout: ICA_QUEUE_VIZ_TIMEOUT,
       slackTopicArn: getTopicArnFromTopicName(SLACK_TOPIC_NAME),
       dlqMessageThreshold: DLQ_ALARM_THRESHOLD,
       icaAwsAccountNumber: ICA_AWS_ACCOUNT_NUMBER,
+    });
+
+    // Build the callback table used by the durable handleIcaEvent lambda to
+    // de-duplicate incoming SQS messages.
+    buildCallbackTable(this, {
+      tableName: CALLBACK_TABLE_NAME,
     });
   }
 }

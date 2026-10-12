@@ -1,6 +1,4 @@
 import { Duration } from 'aws-cdk-lib';
-import { Queue } from 'aws-cdk-lib/aws-sqs';
-import { StateMachineName } from '../step-functions/interfaces';
 
 export interface IcaSqsQueueConstructProps {
   /* The name for the incoming SQS queue (the DLQ with use this name with a "-dlq" postfix) */
@@ -14,15 +12,3 @@ export interface IcaSqsQueueConstructProps {
   /* The ICA account to grant publish permissions to */
   icaAwsAccountNumber: string;
 }
-
-export interface IcaEventPipeConstructProps {
-  /* The Sqs object */
-  icaSqsQueue: Queue;
-  /* The name for the Event Pipe */
-  icaEventPipeName: string;
-  /* Step function name */
-  stepFunctionName: StateMachineName;
-}
-
-export type IcaSqsEventPipeProps = Omit<IcaEventPipeConstructProps, 'icaSqsQueue'> &
-  IcaSqsQueueConstructProps;
