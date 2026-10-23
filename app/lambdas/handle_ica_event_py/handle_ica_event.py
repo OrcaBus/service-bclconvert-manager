@@ -136,8 +136,10 @@ def handler(event, context: DurableContext):
     """
     Consume ICA analysis state change events (ICA_EXEC_028) from the SQS queue.
 
-    The SQS message body is a JSON array of objects, each containing a top level
-    'projectId' and a 'payload' with the analysis 'status', 'id' and 'pipeline'.
+    The SQS message body is a JSON object (the ICA_EXEC_028 event) containing a
+    top level 'projectId' and a 'payload' with the analysis 'status', 'id' and
+    'pipeline'. Some deliveries may batch several event objects into a JSON
+    array, so both shapes are supported.
     :param event:
     :param context:
     :return:
@@ -148,8 +150,11 @@ def handler(event, context: DurableContext):
         if is_duplicate_message(message_id):
             continue
 
-        # The ICA event body is a JSON array of analysis objects
-        record_body = json.loads(record.get("body", "[]"))
+        # The ICA event body is a single analysis object, but tolerate a JSON
+        # array of objects in case messages are ever batched.
+        record_body = json.loads(record.get("body", "{}"))
+        if isinstance(record_body, dict):
+            record_body = [record_body]
 
         for ica_event_object in record_body:
             payload = ica_event_object.get("payload", {})
