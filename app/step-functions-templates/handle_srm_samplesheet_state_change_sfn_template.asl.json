@@ -7,7 +7,7 @@
       "Next": "Give SRM a minute to also ingest the samplesheet",
       "Assign": {
         "instrumentRunId": "{% $states.input.instrumentRunId %}",
-        "sequencerRunId": "{% $states.input.sequencerRunId %}"
+        "sequenceRunId": "{% $states.input.sequenceRunId %}"
       }
     },
     "Give SRM a minute to also ingest the samplesheet": {
@@ -22,7 +22,7 @@
         "FunctionName": "${__find_workflows_by_instrument_run_id_lambda_function_arn__}",
         "Payload": {
           "instrumentRunId": "{% $instrumentRunId %}",
-          "sequencerRunId": "{% $sequencerRunId %}"
+          "sequenceRunId": "{% $sequenceRunId %}"
         }
       },
       "Retry": [
@@ -65,7 +65,7 @@
         "FunctionName": "${__create_bclconvert_workflow_draft_event_detail_lambda_function_arn__}",
         "Payload": {
           "instrumentRunId": "{% $instrumentRunId %}",
-          "sequencerRunId": "{% $sequencerRunId %}"
+          "sequenceRunId": "{% $sequenceRunId %}"
         }
       },
       "Retry": [
