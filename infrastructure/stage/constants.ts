@@ -64,7 +64,7 @@ export const ICA_SQS_NAME = 'BclConvertAnalysisSqsQueue';
 // least as long as the lambda's maximum processing time.
 export const ICA_QUEUE_VIZ_TIMEOUT = Duration.minutes(15);
 // Bounded concurrency for the durable handleIcaEvent lambda consuming the queue
-export const ICA_EVENT_QUEUE_MAX_CONCURRENCY = 5;
+export const ICA_EVENT_QUEUE_MAX_CONCURRENCY = 1;
 export const DLQ_ALARM_THRESHOLD = 1;
 export const ICA_AWS_ACCOUNT_NUMBER = '079623148045';
 
