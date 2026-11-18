@@ -19,7 +19,7 @@ import {
   SSM_SCHEMA_ROOT,
   SCHEMA_REGISTRY_NAME,
   STACK_PREFIX,
-  ICA_EVENT_QUEUE_MAX_CONCURRENCY,
+  ICA_EVENT_QUEUE_RESERVED_CONCURRENCY,
 } from '../constants';
 import { Duration } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
@@ -79,6 +79,9 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
     handler: 'handler',
     timeout: lambdaRequirements.needsExtendedTimeout ? Duration.minutes(5) : Duration.minutes(1),
     memorySize: 2048,
+    reservedConcurrentExecutions: lambdaRequirements.needsIcaEventQueueEventSource
+      ? ICA_EVENT_QUEUE_RESERVED_CONCURRENCY
+      : undefined,
     includeOrcabusApiToolsLayer: lambdaRequirements.needsOrcabusApiTools,
     includeIcav2Layer: lambdaRequirements.needsIcav2Tools,
     durableConfig: lambdaRequirements.needsDurableExecutionPermissions
@@ -218,8 +221,8 @@ function buildLambda(scope: Construct, props: LambdaInput): LambdaObject {
 
     lambdaFunction.currentVersion.addEventSource(
       new SqsEventSource(props.icaEventQueue, {
-        // Process one message at a time with bounded concurrency
-        maxConcurrency: ICA_EVENT_QUEUE_MAX_CONCURRENCY,
+        // One message per invocation. Serial processing is enforced by the
+        // function's reserved concurrency (maxConcurrency must be >= 2)
         batchSize: 1,
       })
     );

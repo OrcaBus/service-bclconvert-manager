@@ -5,6 +5,7 @@ export interface IcaSqsQueueConstructProps {
   icaQueueName: string;
   /* The visibility timeout for the queue */
   icaQueueVizTimeout: Duration;
+  icaQueueMaxReceiveCount: number;
   /* The ARN of the SNS Topic to receive DLQ notifications from CloudWatch */
   slackTopicArn: string;
   /* The CloudWatch Alarm threshold to use before raising an alarm */

@@ -10,6 +10,7 @@ import {
   DLQ_ALARM_THRESHOLD,
   ICA_AWS_ACCOUNT_NUMBER,
   ICA_QUEUE_VIZ_TIMEOUT,
+  ICA_QUEUE_MAX_RECEIVE_COUNT,
   ICA_SQS_NAME,
   SLACK_TOPIC_NAME,
 } from './constants';
@@ -42,6 +43,7 @@ export class StatefulApplicationStack extends GitStack {
     createMonitoredQueue(this, {
       icaQueueName: ICA_SQS_NAME,
       icaQueueVizTimeout: ICA_QUEUE_VIZ_TIMEOUT,
+      icaQueueMaxReceiveCount: ICA_QUEUE_MAX_RECEIVE_COUNT,
       slackTopicArn: getTopicArnFromTopicName(SLACK_TOPIC_NAME),
       dlqMessageThreshold: DLQ_ALARM_THRESHOLD,
       icaAwsAccountNumber: ICA_AWS_ACCOUNT_NUMBER,
