@@ -15,9 +15,15 @@ minimumReleaseAgeExclude:
 # Only reaches the tree via jest (devDependency), not shipped code.
 auditConfig:
   ignoreGhsas:
+    # picomatch <=4.0.7 ReDoS through single-branch patterns (dev-only, via jest/eslint).
+    # No patched version is published (latest is 4.0.7). Remove this exception once
+    # a fixed release ships and add an override for it.
+    - GHSA-fc5q-39xc-vjpf
     - GHSA-gcqx-w48m-w2h4
 
 overrides:
+  glob@>=9.0.0 <=14.0.1: ^14.0.2
+  minimatch@>=7.0.0 <11.0.1: ^11.0.1
   ajv@<6.14.0: '>=6.14.0'
   baseline-browser-mapping@>=2.0.0 <2.11.0: ^2.11.0
   browserslist@<=4.28.6: ^4.28.7
