@@ -29,6 +29,7 @@ export function createMonitoredQueue(scope: Construct, props: IcaSqsQueueConstru
       enforceSSL: true,
       visibilityTimeout: props.icaQueueVizTimeout,
     },
+    maxReceiveCount: props.icaQueueMaxReceiveCount,
     messageThreshold: props.dlqMessageThreshold,
     topic: topic,
   });

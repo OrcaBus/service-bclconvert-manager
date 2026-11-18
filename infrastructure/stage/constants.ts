@@ -63,8 +63,13 @@ export const ICA_SQS_NAME = 'BclConvertAnalysisSqsQueue';
 // execution can run for up to 15 minutes. The visibility timeout must be at
 // least as long as the lambda's maximum processing time.
 export const ICA_QUEUE_VIZ_TIMEOUT = Duration.minutes(15);
-// Bounded concurrency for the durable handleIcaEvent lambda consuming the queue
-export const ICA_EVENT_QUEUE_MAX_CONCURRENCY = 1;
+// Reserved concurrency for the durable handleIcaEvent lambda consuming the queue.
+// The SQS event source mapping's maxConcurrency has a minimum of 2, so to process
+// one message at a time we cap the lambda itself at a single concurrent execution.
+export const ICA_EVENT_QUEUE_RESERVED_CONCURRENCY = 1;
+// Throttled invocations return the message to the queue and count as a receive,
+// so allow many receives before a message is moved to the DLQ.
+export const ICA_QUEUE_MAX_RECEIVE_COUNT = 10;
 export const DLQ_ALARM_THRESHOLD = 1;
 export const ICA_AWS_ACCOUNT_NUMBER = '079623148045';
 
